@@ -24,6 +24,9 @@ public:
 
   void sendRequest();
   void parseResponse(SymbolContainer& container);
+  bool responseOk() const { return mHttpCode != 200 || mCurlCode != 200; }
+  int getHttpCode() const { return mHttpCode; }
+  int getCurlCode() const { return mCurlCode; }
   
 private:
   
@@ -42,4 +45,7 @@ private:
   std::string mStartDate;
   std::string mEndDate;
   int mPrecision;
+
+  int mHttpCode;
+  CURLcode mCurlCode;
 };
