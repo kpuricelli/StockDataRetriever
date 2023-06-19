@@ -86,19 +86,11 @@ void WebDataRetriever::sendRequest()
   // Set the URL
   curl_easy_setopt(mCurlHandle, CURLOPT_URL, url.c_str());
 
-  // Send
-  const CURLcode curlCode = curl_easy_perform(mCurlHandle);
+  // Send + curl response code
+  mCurlCode = curl_easy_perform(mCurlHandle);
   
   // HTTP response code
-  long httpCode = 0;
-  curl_easy_getinfo(mCurlHandle, CURLINFO_RESPONSE_CODE, &httpCode);
-
-  // Check responses
-  if (httpCode != 200 || curlCode != 0)
-  {
-    std::cout << "WebDataRetriever::sendRequest(): "
-      "httpCode, curlCode: " << httpCode << curlCode << std::endl;
-  }
+  curl_easy_getinfo(mCurlHandle, CURLINFO_RESPONSE_CODE, &mHttpCode);
   
   curl_easy_cleanup(mCurlHandle);
 }
@@ -119,6 +111,16 @@ void WebDataRetriever::parseResponse(SymbolContainer& container)
 
   const json responseAsJson = json::parse(mResponse);
 
+  // Something bad happened if status != ok
+  const std::string status = responseAsJson["status"];
+  if (status != "ok")
+  {
+    const std::string reason = responseAsJson["message"];
+    std::cout << "\nError: API status returned: " << status
+              << "\nWith message: " << reason << std::endl;
+    return;
+  }
+
   const json meta = responseAsJson["meta"];
   const std::string symbol = meta["symbol"];
   
@@ -133,7 +135,7 @@ void WebDataRetriever::parseResponse(SymbolContainer& container)
     const std::string closeStr = value["close"];
     const std::string volumeStr = value["volume"];
 
-    // kptodo check precision / set
+    // kptodo check precision / set (?)
     // Typecast to numbers
     const double open = std::atof(openStr.c_str());
     const double high = std::atof(highStr.c_str());
