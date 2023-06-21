@@ -13,12 +13,17 @@ insertSymbol(const std::string& symbol,
   {
     std::cout << "No mapped data for symbol: " << symbol << ", creating"
               << std::endl;
+    
+    mSymbols.emplace(symbol, std::move(data));
   }
   else
   {
-    std::cout << "Entry found for symbol: " << symbol << ", adding record"
+    std::cout << "Entry found for symbol: " << symbol << ", adding records"
               << std::endl;
-  }
 
-  mSymbols.emplace(symbol, std::move(data));
+    for (auto it = data.begin(); it != data.end(); ++it)
+    {
+      mSymbols[symbol].emplace(it->first, std::move(it->second));
+    }
+  }
 }

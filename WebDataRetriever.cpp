@@ -32,7 +32,12 @@ WebDataRetriever::WebDataRetriever()
 //=============================================================================
 WebDataRetriever::~WebDataRetriever()
 {
-  delete mResponsePtr;
+  // kptodo
+  //delete mResponsePtr;
+
+  // Unsure what curl is doing internally with this ptr
+  curl_easy_cleanup(mCurlHandle);
+  mCurlHandle = nullptr;
 }
 
 //=============================================================================
@@ -60,21 +65,25 @@ void WebDataRetriever::initInternal()
   // Write data callback
   curl_easy_setopt(mCurlHandle, CURLOPT_WRITEFUNCTION, handleResponse);
 
+  // kptodo
   // Hook up data container (curl write data uses void*)
-  mResponsePtr = new std::string();
-  curl_easy_setopt(mCurlHandle, CURLOPT_WRITEDATA, mResponsePtr);
+  //mResponsePtr = new std::string();
+  //curl_easy_setopt(mCurlHandle, CURLOPT_WRITEDATA, mResponsePtr);
 }
 
 //=============================================================================
 //=============================================================================
 void WebDataRetriever::sendRequest()
 {
+  // kptodo
+#if 0
   if (!mResponsePtr || !mCurlHandle)
   {
     std::cout << "WebDataRetriever::sendRequest(): "
       "!mResponsePtr or !mCurlHandle" << std::endl;
     return;
   }
+#endif
   
   std::string url;
   url.reserve(64);
@@ -86,13 +95,19 @@ void WebDataRetriever::sendRequest()
   // Set the URL
   curl_easy_setopt(mCurlHandle, CURLOPT_URL, url.c_str());
 
+  mResponsePtr = new std::string();
+  // kptodo reserve size (?)
+  mResponsePtr->reserve(4096);
+  curl_easy_setopt(mCurlHandle, CURLOPT_WRITEDATA, mResponsePtr);
+  
   // Send + curl response code
   mCurlCode = curl_easy_perform(mCurlHandle);
   
   // HTTP response code
   curl_easy_getinfo(mCurlHandle, CURLINFO_RESPONSE_CODE, &mHttpCode);
-  
-  curl_easy_cleanup(mCurlHandle);
+
+  // kptodo moved 2 destructor?
+  //curl_easy_cleanup(mCurlHandle);
 }
 
 //=============================================================================
@@ -107,8 +122,9 @@ void WebDataRetriever::parseResponse(SymbolContainer& container)
   }
   
   // Cast to std::string
+  mResponse.reserve(mResponsePtr->size());
   mResponse = *mResponsePtr;
-
+  
   const json responseAsJson = json::parse(mResponse);
 
   // Something bad happened if status != ok
@@ -153,4 +169,10 @@ void WebDataRetriever::parseResponse(SymbolContainer& container)
   
   // Save to container
   container.insertSymbol(symbol, valuesContainer);
+
+  // kptodo is this req?
+  delete mResponsePtr;
+  std::cout << "r size: " << mResponse.size() << std::endl;
+  mResponse.erase();
+  //mResponsePtr->erase();
 }
