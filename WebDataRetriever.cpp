@@ -4,6 +4,13 @@
 #include <map>
 #include <iostream>
 
+//
+// kptodo / thoughts
+// Using a larger dataset, examine the performance tradeoffs of doing a
+// new/delete on mResponsePtr between each api call (current implementation),
+// and once per creation / destruction of this object. see other 'kptodo-s'
+//
+
 //=============================================================================
 //=============================================================================
 namespace
@@ -105,9 +112,6 @@ void WebDataRetriever::sendRequest()
   
   // HTTP response code
   curl_easy_getinfo(mCurlHandle, CURLINFO_RESPONSE_CODE, &mHttpCode);
-
-  // kptodo moved 2 destructor?
-  //curl_easy_cleanup(mCurlHandle);
 }
 
 //=============================================================================
@@ -172,7 +176,6 @@ void WebDataRetriever::parseResponse(SymbolContainer& container)
 
   // kptodo is this req?
   delete mResponsePtr;
-  std::cout << "r size: " << mResponse.size() << std::endl;
   mResponse.erase();
   //mResponsePtr->erase();
 }

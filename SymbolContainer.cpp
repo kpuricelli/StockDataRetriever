@@ -11,14 +11,14 @@ insertSymbol(const std::string& symbol,
   const auto& symbolsIt = mSymbols.find(symbol);
   if (symbolsIt == mSymbols.end())
   {
-    std::cout << "No mapped data for symbol: " << symbol << ", creating"
+    std::cout << "\nNo mapped data for symbol: " << symbol << ", creating"
               << std::endl;
     
     mSymbols.emplace(symbol, std::move(data));
   }
   else
   {
-    std::cout << "Entry found for symbol: " << symbol << ", adding records"
+    std::cout << "\nEntry found for symbol: " << symbol << ", adding records"
               << std::endl;
 
     for (auto it = data.begin(); it != data.end(); ++it)

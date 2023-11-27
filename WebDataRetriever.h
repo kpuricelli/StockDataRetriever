@@ -37,7 +37,7 @@ private:
   std::string* mResponsePtr;
   std::string mResponse;
 
-  // 12data parameters
+  // 12data api parameters
   std::string mEndpoint;
   std::string mApiKey;
   std::string mSymbol;

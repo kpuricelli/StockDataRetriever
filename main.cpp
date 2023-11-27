@@ -6,15 +6,18 @@
 #include "SymbolContainer.h"
 #include <iostream>
 
-static constexpr int debugPrint = 0;
+// kptodo rip this out into a more formal testing structure
+static constexpr int debugPrintTimestamps = 0;
+static constexpr int numExpectedTimestamps = 7;
+static constexpr int numExpectedTimestamps2 = 10;
+
+void checkResponseStatus(const WebDataRetriever& webData);
 
 //=============================================================================
 //=============================================================================
 int main(int argc, char* argv[])
 {
-  // kptodo makefile
-  // g++ -std=c++11 -Wall WebDataRetriever.cpp StockTimeSeriesData.cpp
-  // SymbolContainer.cpp main.cpp -lcurl
+  // kptodo move all this to some testing file
   
   WebDataRetriever w;
   SymbolContainer symbols;
@@ -22,37 +25,92 @@ int main(int argc, char* argv[])
   // Randomly selected a small data set
   w.setEndpoint("http://api.twelvedata.com");
   w.setSymbol("AAPL");
-  w.setInterval("1min");
-  w.setStartDate("2023-06-01 09:30:00");
-  w.setEndDate("2023-06-01 15:30:00");
-
+  w.setInterval("1h");
+  w.setStartDate("2022-02-01 09:30:00");
+  w.setEndDate("2022-02-01 15:30:00");
   w.sendRequest();
-  if (!w.responseOk())
-  {
-    std::cout << "Errors in http or curl response with codes: "
-              << "httpcode: " << w.getHttpCode() << ", curlcode: "
-              << w.getCurlCode() << std::endl;
-    return 1;
-  }
+  checkResponseStatus(w);
   w.parseResponse(symbols);
 
-  auto sIt = symbols.getSymbols().find("AAPL");
-  if (sIt == symbols.getSymbols().end())
-  {
-    std::cout << "No AAPL" << std::endl;
-  }
-  else
-  {
-    std::cout << "Number of timestamps: " << sIt->second.size() << std::endl;
+  // First test: insert symbol timestamps into empty container
+  auto AAPLIter = symbols.getSymbols().find("AAPL");
+  const int numAAPLTimestamps = AAPLIter->second.size();
+  std::cout << "\nTest 1: inserting 7 timestamps into an empty container..."
+            << std::endl;
+  std::cout << "Expected: " << numExpectedTimestamps << std::endl;
+  std::cout << "Parsed: " << numAAPLTimestamps << std::endl;
 
-    if (debugPrint)
+  if (numAAPLTimestamps != numExpectedTimestamps)
+    std::cout << "Test result: Fail!" << std::endl;
+  else
+    std::cout << "Test result: Pass!" << std::endl;    
+    
+  // Randomly selected another small data set (7 days later; 3 timestamps)
+  w.setStartDate("2022-02-08 09:30:00");
+  w.setEndDate("2022-02-08 11:30:00");
+  w.sendRequest();
+  checkResponseStatus(w);
+  w.parseResponse(symbols);
+
+  // Second test: insert symbols into non-empty map
+  AAPLIter = symbols.getSymbols().find("AAPL");
+  const int numAAPLTimestamps2 = AAPLIter->second.size();
+  std::cout << "\nTest 2: inserting 3 timestamps into non-empty container..."
+            << std::endl;
+  std::cout << "Expected: " << numExpectedTimestamps2 << std::endl;
+  std::cout << "Parsed: " << numAAPLTimestamps2 << std::endl;
+
+  if (numAAPLTimestamps2 != numExpectedTimestamps2)
+    std::cout << "Test result: Fail!" << std::endl;
+  else
+    std::cout << "Test result: Pass!" << std::endl;    
+
+  // kptodo create a counting machine
+#if 0
+  for (int day = 7; day <= 14; day+=7)
+  {
+    // kptodo upd8 enddate
+    std::string endDate = "2022-01-" + std::to_string(day) + " 15:30:00";
+    w.setEndDate(endDate);
+
+    // kptodo rm
+    std::cout << endDate << std::endl;
+    w.sendRequest();
+    checkResponseStatus(w);
+    w.parseResponse(symbols);
+  }
+#endif
+
+  // Some extra debugging stuff to compare the timestamps themselves
+  if (debugPrintTimestamps)
+  {
+    AAPLIter = symbols.getSymbols().find("AAPL");
+    if (AAPLIter == symbols.getSymbols().end())
     {
-      for (const auto& tstamps : sIt->second)
+      std::cout << "No AAPL" << std::endl;
+    }
+    else
+    {
+      std::cout << "Number of timestamps: "
+                << AAPLIter->second.size() << std::endl;
+
+      for (const auto& tstamps : AAPLIter->second)
       {
         std::cout << tstamps.first << std::endl;
         tstamps.second.debugPrint();
       }
     }
   }
+  std::cout << std::endl;
   return 0;
+}
+
+void checkResponseStatus(const WebDataRetriever& webData)
+{
+  if (!webData.responseOk())
+  {
+    std::cout << "Errors in http or curl response with codes: "
+              << "httpcode: " << webData.getHttpCode() << ", curlcode: "
+              << webData.getCurlCode() << std::endl;
+  }
 }
