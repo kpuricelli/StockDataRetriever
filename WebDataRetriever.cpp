@@ -130,7 +130,7 @@ void WebDataRetriever::parseResponse(SymbolContainer& container)
   mResponse = *mResponsePtr;
   
   const json responseAsJson = json::parse(mResponse);
-
+  
   // Something bad happened if status != ok
   const std::string status = responseAsJson["status"];
   if (status != "ok")
