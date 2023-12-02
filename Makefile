@@ -1,10 +1,10 @@
-# Makefile v1
+# Makefile v1.1
 
-# kptodo dir for .o files (?)
+# kptodo build dir
 
 # Variables
 TARGET = Stockxxx
-CXXFLAGS = -std=c++11 -Wall -Werror -Wextra -pedantic
+CXXFLAGS = -std=c++20 -Wall -Werror -Wextra -Wconversion -pedantic
 CC = g++
 LDLIBS = -lcurl
 OBJS = main.o StockTimeSeriesData.o SymbolContainer.o WebDataRetriever.o
