@@ -1,41 +1,42 @@
-# Makefile v1.2
+#
+# Makefile v1.3
+#
 
-# Variables
-TARGET = StockDataRetriever
+# Directories
+SRC_DIR := src
+OBJ_DIR := obj
+BIN_DIR := bin
 
-# kptodo build dir
+# Executable name
+PROGNAME := StockDataRetriever
+TARGET := $(BIN_DIR)/$(PROGNAME)
+SRC := $(wildcard $(SRC_DIR)/*.cpp)
+OBJ := $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
 # Compiler args
-CC = g++
-CXXFLAGS = -std=c++20 -Wall -Werror -Wextra -Wconversion -pedantic
-
-# kptodo src
-
-# Objs
-OBJDIR=obj
-OBJS = $(OBJDIR)/main.o
-OBJS += $(OBJDIR)/StockTimeSeriesData.o
-OBJS += $(OBJDIR)/SymbolContainer.o
-OBJS += $(OBJDIR)/WebDataRetriever.o
+CXX := g++
+CXXFLAGS := -std=c++20 -Wall -Werror -Wextra -Wconversion -pedantic
 
 # Libs
-LDLIBS = -lcurl
+LDLIBS := -lcurl
 
-# Rules
-main: $(OBJS)
-	$(CC) -o $(TARGET) $(CXXFLAGS) $(OBJS) $(LDLIBS)
+#===============================================================================
+# Targets
+#===============================================================================
+.PHONY: all clean
 
-$(OBJDIR)/main.o: main.cpp WebDataRetriever.h SymbolContainer.h
-	$(CC) -c main.cpp -o $(OBJDIR)/main.o
+all: $(TARGET)
 
-$(OBJDIR)/StockTimeSeriesData.o: StockTimeSeriesData.cpp
-	$(CC) -c StockTimeSeriesData.cpp -o $(OBJDIR)/StockTimeSeriesData.o
+$(TARGET): $(OBJ) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $^ $(LDLIBS) -o $@
 
-$(OBJDIR)/SymbolContainer.o: SymbolContainer.cpp StockTimeSeriesData.h
-	$(CC) -c SymbolContainer.cpp -o $(OBJDIR)/SymbolContainer.o
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+	$(CXX) -c $< -o $@
 
-$(OBJDIR)/WebDataRetriever.o: WebDataRetriever.cpp SymbolContainer.h
-	$(CC) -c WebDataRetriever.cpp -o $(OBJDIR)/WebDataRetriever.o
+$(BIN_DIR) $(OBJ_DIR):
+	mkdir -p $@
 
 clean:
-	@rm -rf $(TARGET) $(OBJDIR) 2>/dev/null
+	@$(RM) -rv $(BIN_DIR) $(OBJ_DIR)
+
+-include $(OBJ:.o=.d)
