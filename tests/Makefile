@@ -1,55 +1,62 @@
-#
-# Test Makefile v1.?
-#
-
-# Directories
-SRC_DIR := .
-OBJ_DIR := obj
-BIN_DIR := ../bin
-
-# Path to src and its *.o files
-SRC_DIR_MAIN := ../src
-OBJ_DIR_MAIN := ../obj
+#==============================================================================
+# Makefile for linking the Catch2 tests against all necessary object files -
+# note 'main.o' is specifically excluded 
+#==============================================================================
+include ../Makefile.common.defs
 
 # Executable name
 PROGNAME := RunTests
-TARGET := $(BIN_DIR)/$(PROGNAME)
+TEST_ROOT := .
+TST_TARGET := $(PROJ_BIN_DIR)/$(PROGNAME)
+SRC := $(wildcard $(TEST_ROOT)/*.cpp)
+OBJ := $(SRC:$(TEST_ROOT)/%.cpp=$(OBJ_DIR)/%.o)
 
-# Test files
-SRC := $(wildcard $(SRC_DIR)/*.cpp)
-OBJ := $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
-# Main source files
+# kptodo rm
+$(info PROJ_ROOT is: $(PROJ_ROOT))
+$(info TEST_SRC_DIR is: $(TEST_SRC_DIR))
+$(info TEST_ROOT is: $(TEST_ROOT))
+$(info PROGNAME is: $(PROGNAME))
+$(info TST_TARGET is: $(TST_TARGET))
+$(info SRC is: $(SRC))
+$(info OBJ is: $(OBJ))
+
+# Test-specific source files
 # We need all the object files, except main.o, since we're linking with
-# catch's main
-SRC_MAIN := $(wildcard $(SRC_DIR_MAIN)/*.cpp)
-SRC_MAIN := $(filter-out $(SRC_DIR_MAIN)/main.cpp, $(SRC_MAIN))
-OBJ2 := $(SRC_MAIN:$(SRC_DIR_MAIN)/%.cpp=$(OBJ_DIR_MAIN)/%.o)
+# Catch2's main.o
+#SRC_MAIN := $(wildcard $(PROJ_SRC_DIR)/*.cpp)
+#SRC_MAIN := $(filter-out $(PROJ_SRC_DIR)/main.cpp, $(SRC_MAIN))
 
-# Compiler args
-CXX := g++
-CXXFLAGS := -std=c++20 -Wall -Werror -Wextra -Wconversion -pedantic
+SRC_MAIN := $(wildcard ../src/*.cpp)
+SRC_MAIN := $(filter-out ../src/main.cpp, $(SRC_MAIN))
 
-# Libs
-LDLIBS := -lcurl
+OBJ2     := $(SRC_MAIN:../src/%.cpp=$(OBJ_DIR)/%.o)
+
+OBJS := $(OBJ) $(OBJ2)
+
+# KPTODO RM
+$(info OBJ_DIR is: $(OBJ_DIR))
+$(info PROJ_BIN_DIR is: $(PROJ_BIN_DIR))
+$(info SRC_MAIN is: $(SRC_MAIN))
+$(info OBJ2 is: $(OBJS))
 
 #===============================================================================
 # Targets
 #===============================================================================
 .PHONY: all clean
 
-all: $(TARGET)
+all: $(TST_TARGET)
 
-$(TARGET): $(OBJ) | $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) $^ $(OBJ2) $(LDLIBS) -o $@
+$(TST_TARGET): $(OBJS) | $(PROJ_BIN_DIR)
+	$(CXX) $(CXXFLAGS) $^ $(LDLIBS) -o $@
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+$(OBJ_DIR)/%.o: $(TEST_ROOT)/%.cpp | $(OBJ_DIR)
 	$(CXX) -c $< -o $@
 
-$(BIN_DIR) $(OBJ_DIR):
+$(PROJ_BIN_DIR) $(OBJ_DIR):
 	mkdir -p $@
 
 clean:
-	@$(RM) -rv $(OBJ_DIR)
+	@$(RM) -rv $(PROJ_BIN_DIR) $(OBJ_DIR)
 
 -include $(OBJ:.o=.d)

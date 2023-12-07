@@ -1,0 +1,48 @@
+#==============================================================================
+# This top level makefile is designed to extract the common definitions
+# needed by every other makefile
+#==============================================================================
+
+#==============================================================================
+# Start by including the common definitions
+#==============================================================================
+OS := $(shell uname -s).$(shell uname -m)
+PROJ_ROOT := $(shell bash -cf "pwd | sed -e 's:\(.*\)/src\(.*\):\1:'")
+BUILD_OPTIMIZED := false
+RHEL := \
+$(shell bash -c "cat /etc/redhat-release | sed 's/[a-zA-Z ]*//;s/\..*//'")
+
+#==============================================================================
+# Directories
+#==============================================================================
+PROJ_SRC_DIR := $(PROJ_ROOT)/src
+TEST_SRC_DIR := $(PROJ_ROOT)/tests
+OBJ_DIR      := $(OS)
+PROJ_BIN_DIR := $(PROJ_ROOT)/bin/$(OBJ_DIR)
+
+#==============================================================================
+# Compiler defs
+#==============================================================================
+CXX := g++ -std=c++20
+OptFlags := -O2
+DebugFlags := -g
+
+ifeq ($(BUILD_OPTIMIZED),false)
+  CXX_DEBUG := $(DebugFlags)
+  CXX_OPTIMIZE :=
+endif
+ifeq ($(BUILD_OPTIMIZED),true)
+  CXX_DEBUG :=
+  CXX_OPTIMIZE := $(OptFlags)
+endif
+
+# More flags
+CXX_WARN := -Wall -Werror -Wextra -Wconversion -pedantic
+CXXFLAGS := $(CXX_WARN) $(CXX_DEBUG) $(CXX_OPTIMIZE)
+
+# Libs
+LDLIBS := -lcurl
+
+#===============================================================================
+# Targets: none
+#===============================================================================
