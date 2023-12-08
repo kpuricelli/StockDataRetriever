@@ -51,6 +51,7 @@ WebDataRetriever::~WebDataRetriever()
 //=============================================================================
 void WebDataRetriever::initInternal()
 {
+  // kptodo hide this somewhere if this repo ever becomes public
   mApiKey = "cfa77bb3562b4677aed66bcc63659505";
 
   // curl lib
@@ -72,25 +73,33 @@ void WebDataRetriever::initInternal()
   // Write data callback
   curl_easy_setopt(mCurlHandle, CURLOPT_WRITEFUNCTION, handleResponse);
 
-  // kptodo
+  // kptodo benchmark setup
   // Hook up data container (curl write data uses void*)
   //mResponsePtr = new std::string();
   //curl_easy_setopt(mCurlHandle, CURLOPT_WRITEDATA, mResponsePtr);
 }
 
 //=============================================================================
+// Print out some more info if we get a non-ok status from either curl
+// or http
+//=============================================================================
+void WebDataRetriever::checkResponseStatus()
+{
+  std::cout << "\nErrors in http or curl response with codes: "
+            << "httpcode: " << mHttpCode << std::endl;
+  std::cout << "\n curlcode: " << mCurlCode << std::endl;
+}
+
+//=============================================================================
 //=============================================================================
 void WebDataRetriever::sendRequest()
 {
-  // kptodo
-#if 0
   if (!mResponsePtr || !mCurlHandle)
   {
     std::cout << "WebDataRetriever::sendRequest(): "
       "!mResponsePtr or !mCurlHandle" << std::endl;
     return;
   }
-#endif
   
   std::string url;
   url.reserve(64);
@@ -118,10 +127,19 @@ void WebDataRetriever::sendRequest()
 //=============================================================================
 void WebDataRetriever::parseResponse(SymbolContainer& container)
 {
+  // Sanity check
   if (!mResponsePtr)
   {
-    std::cout << "WebDataRetriever::parseResponse: mResponsePtr nullptr"
+    std::cout << "WebDataRetriever::parseResponse: mResponsePtr is null!"
               << std::endl;
+    return;
+  }
+
+  // If we got an non-good status code frin either curl or http, investigate
+  if (!responseOk())
+  {
+    checkResponseStatus();
+    std::cout << "WebDataRetriever::parseResponse: !responseOk()" << std::endl;
     return;
   }
   

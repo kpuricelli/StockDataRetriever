@@ -12,8 +12,6 @@ static constexpr int numExpectedTimestamps = 7;
 static constexpr int numExpectedTimestamps2 = 10;
 static constexpr int numExpectedQQQTimestamps = 7;
 
-void checkResponseStatus(const WebDataRetriever& webData);
-
 //=============================================================================
 //=============================================================================
 int main(int argc, char* argv[])
@@ -30,7 +28,6 @@ int main(int argc, char* argv[])
   w.setStartDate("2022-02-01 09:30:00");
   w.setEndDate("2022-02-01 15:30:00");
   w.sendRequest();
-  checkResponseStatus(w);
   w.parseResponse(symbols);
 
   // First test: insert symbol timestamps into empty container
@@ -50,7 +47,6 @@ int main(int argc, char* argv[])
   w.setStartDate("2022-02-08 09:30:00");
   w.setEndDate("2022-02-08 11:30:00");
   w.sendRequest();
-  checkResponseStatus(w);
   w.parseResponse(symbols);
 
   // Second test: insert same symbol into non-empty map
@@ -71,7 +67,6 @@ int main(int argc, char* argv[])
   w.setStartDate("2023-09-11 09:30:00");
   w.setEndDate("2023-09-11 15:30:00");
   w.sendRequest();
-  checkResponseStatus(w);
   w.parseResponse(symbols);
 
   // Third test: insert a different symbol into empty map
@@ -100,7 +95,6 @@ int main(int argc, char* argv[])
     // kptodo rm
     std::cout << endDate << std::endl;
     w.sendRequest();
-    checkResponseStatus(w);
     w.parseResponse(symbols);
   }
 #endif
@@ -149,19 +143,8 @@ int main(int argc, char* argv[])
     }
 
   }
+
+  // kptodo rm
   std::cout << std::endl;
   return 0;
-}
-
-
-//==============================================================================
-//==============================================================================
-void checkResponseStatus(const WebDataRetriever& webData)
-{
-  if (!webData.responseOk())
-  {
-    std::cout << "Errors in http or curl response with codes: "
-              << "httpcode: " << webData.getHttpCode() << ", curlcode: "
-              << webData.getCurlCode() << std::endl;
-  }
 }

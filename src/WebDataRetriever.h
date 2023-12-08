@@ -31,6 +31,7 @@ public:
 private:
   
   void initInternal();
+  void checkResponseStatus();
   
   CURL* mCurlHandle;
 
