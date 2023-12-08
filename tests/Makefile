@@ -2,43 +2,34 @@
 # Makefile for linking the Catch2 tests against all necessary object files -
 # note 'main.o' is specifically excluded 
 #==============================================================================
+
+#
+# kptodo
+# only compile tests if the src object files exist
+#
+
 include ../Makefile.common.defs
 
 # Executable name
 PROGNAME := RunTests
-TEST_ROOT := .
-TST_TARGET := $(PROJ_BIN_DIR)/$(PROGNAME)
-SRC := $(wildcard $(TEST_ROOT)/*.cpp)
-OBJ := $(SRC:$(TEST_ROOT)/%.cpp=$(OBJ_DIR)/%.o)
-
+TST_TARGET := $(TEST_BIN_DIR)/$(PROGNAME)
+SRC := $(wildcard $(TEST_SRC_DIR)/*.cpp)
+OBJ := $(SRC:$(TEST_SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
 # kptodo rm
-$(info PROJ_ROOT is: $(PROJ_ROOT))
-$(info TEST_SRC_DIR is: $(TEST_SRC_DIR))
-$(info TEST_ROOT is: $(TEST_ROOT))
-$(info PROGNAME is: $(PROGNAME))
-$(info TST_TARGET is: $(TST_TARGET))
-$(info SRC is: $(SRC))
-$(info OBJ is: $(OBJ))
+$(info src_DIR: $(TEST_SRC_DIR))
+$(info src: $(SRC))
+$(info objs: $(OBJS))
 
 # Test-specific source files
 # We need all the object files, except main.o, since we're linking with
 # Catch2's main.o
-#SRC_MAIN := $(wildcard $(PROJ_SRC_DIR)/*.cpp)
-#SRC_MAIN := $(filter-out $(PROJ_SRC_DIR)/main.cpp, $(SRC_MAIN))
-
-SRC_MAIN := $(wildcard ../src/*.cpp)
-SRC_MAIN := $(filter-out ../src/main.cpp, $(SRC_MAIN))
-
-OBJ2     := $(SRC_MAIN:../src/%.cpp=$(OBJ_DIR)/%.o)
-
-OBJS := $(OBJ) $(OBJ2)
-
-# KPTODO RM
-$(info OBJ_DIR is: $(OBJ_DIR))
-$(info PROJ_BIN_DIR is: $(PROJ_BIN_DIR))
-$(info SRC_MAIN is: $(SRC_MAIN))
-$(info OBJ2 is: $(OBJS))
+SRC_DIR  := $(TEST_ROOT)/src
+SRC_MAIN := $(wildcard $(SRC_DIR)/*.cpp)
+SRC_MAIN := $(filter-out $(SRC_DIR)/main.cpp, $(SRC_MAIN))
+SRC_OBJ_DIR := $(SRC_DIR)/$(OBJ_DIR)
+SRC_OBJS := $(SRC_MAIN:$(SRC_DIR)/%.cpp=$(SRC_OBJ_DIR)/%.o)
+ALL_OBJS := $(OBJ) $(SRC_OBJS)
 
 #===============================================================================
 # Targets
@@ -47,16 +38,16 @@ $(info OBJ2 is: $(OBJS))
 
 all: $(TST_TARGET)
 
-$(TST_TARGET): $(OBJS) | $(PROJ_BIN_DIR)
+$(TST_TARGET): $(ALL_OBJS) | $(TEST_BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ $(LDLIBS) -o $@
 
-$(OBJ_DIR)/%.o: $(TEST_ROOT)/%.cpp | $(OBJ_DIR)
+$(OBJ_DIR)/%.o: $(TEST_SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CXX) -c $< -o $@
 
-$(PROJ_BIN_DIR) $(OBJ_DIR):
+$(TEST_BIN_DIR) $(OBJ_DIR):
 	mkdir -p $@
 
 clean:
-	@$(RM) -rv $(PROJ_BIN_DIR) $(OBJ_DIR)
+	@$(RM) -rv $(TEST_ROOT)/bin $(OBJ_DIR)
 
 -include $(OBJ:.o=.d)
