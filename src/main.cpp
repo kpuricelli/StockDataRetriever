@@ -13,11 +13,12 @@ static constexpr int numExpectedTimestamps2 = 10;
 static constexpr int numExpectedQQQTimestamps = 7;
 
 //=============================================================================
+// Compiler complaining about unused function params
 //=============================================================================
-int main(int argc, char* argv[])
+int main(/*int argc, char* argv[]*/)
 {
   // kptodo move all this to some testing file
-  
+#if 0
   WebDataRetriever w;
   SymbolContainer symbols;
   
@@ -84,8 +85,8 @@ int main(int argc, char* argv[])
 
 
   
+  
   // kptodo create a counting machine
-#if 0
   for (int day = 7; day <= 14; day+=7)
   {
     // kptodo upd8 enddate
@@ -97,7 +98,6 @@ int main(int argc, char* argv[])
     w.sendRequest();
     w.parseResponse(symbols);
   }
-#endif
 
   // Some extra debugging stuff to compare the timestamps themselves
   if (debugPrintTimestamps)
@@ -146,5 +146,6 @@ int main(int argc, char* argv[])
 
   // kptodo rm
   std::cout << std::endl;
+#endif
   return 0;
 }

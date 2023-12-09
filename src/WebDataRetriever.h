@@ -47,6 +47,7 @@ private:
   std::string mEndDate;
   int mPrecision;
 
+  // Response codes
   int mHttpCode;
   CURLcode mCurlCode;
 };

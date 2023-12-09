@@ -13,19 +13,11 @@
 #include "../src/SymbolContainer.h"
 #include <iostream>
 
-//=============================================================================
-// Expected results
-//=============================================================================
-static constexpr int numExpectedTimestamps = 7;
-
-// kptodo
-//void checkResponseStatus(const WebDataRetriever& webData);
 
 //=============================================================================
 //=============================================================================
-TEST_CASE( "API Test", "[AAPL]" )
+TEST_CASE("WebDataRetriever", "[AAPL]")
 {
-  // kptodo
   WebDataRetriever w;
   SymbolContainer symbols;
   
@@ -36,11 +28,13 @@ TEST_CASE( "API Test", "[AAPL]" )
   w.setStartDate("2022-02-01 09:30:00");
   w.setEndDate("2022-02-01 15:30:00");
   w.sendRequest();
-  //checkResponseStatus(w);
   w.parseResponse(symbols);
 
-  auto AAPLIter = symbols.getSymbols().find("AAPL");
-  const auto numAAPLTimestamps = AAPLIter->second.size();
+  // Expected results
+  static constexpr int numExpectedTimestamps = 7;
   
-  REQUIRE( numAAPLTimestamps == 7 );
+  const auto AAPLIter = symbols.getSymbols().find("AAPL");
+  const int numAAPLTimestamps = static_cast<int>(AAPLIter->second.size());
+  
+  REQUIRE(numAAPLTimestamps ==  numExpectedTimestamps);
 }

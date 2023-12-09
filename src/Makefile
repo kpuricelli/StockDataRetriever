@@ -20,7 +20,7 @@ $(TARGET): $(OBJ) | $(PROJ_BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ $(LDLIBS) -o $@
 
 $(OBJ_DIR)/%.o: $(PROJ_SRC_DIR)/%.cpp | $(OBJ_DIR)
-	$(CXX) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(PROJ_BIN_DIR) $(OBJ_DIR):
 	mkdir -p $@
