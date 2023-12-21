@@ -9,7 +9,6 @@
 OS := $(shell uname -s).$(shell uname -m)
 PROJ_ROOT := $(shell bash -cf "pwd | sed -e 's:\(.*\)/src\(.*\):\1:'")
 TEST_ROOT := $(shell bash -cf "pwd | sed -e 's:\(.*\)/tests\(.*\):\1:'")
-BUILD_OPTIMIZED := false
 RHEL := \
 $(shell bash -c "cat /etc/redhat-release | sed 's/[a-zA-Z ]*//;s/\..*//'")
 
