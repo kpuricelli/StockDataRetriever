@@ -30,11 +30,15 @@ OptFlags := -O2
 DebugFlags := -g
 
 # Add the opt / debug flags if desired
-ifeq ($(BUILD_OPTIMIZED),false)
+ifeq ($(STX_OPTIMIZE),none)
   CXX_DEBUG := $(DebugFlags)
   CXX_OPTIMIZE :=
 endif
-ifeq ($(BUILD_OPTIMIZED),true)
+ifeq ($(STX_OPTIMIZE),both)
+  CXX_DEBUG := $(DebugFlags)
+  CXX_OPTIMIZE := $(OptFlags)
+endif
+ifeq ($(STX_OPTIMIZE),all)
   CXX_DEBUG :=
   CXX_OPTIMIZE := $(OptFlags)
 endif
