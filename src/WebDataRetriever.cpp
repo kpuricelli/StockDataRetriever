@@ -31,6 +31,7 @@ namespace
 //=============================================================================
 //=============================================================================
 WebDataRetriever::WebDataRetriever()
+  : mCurlHandle(nullptr), mResponsePtr(nullptr)
 {
   initInternal();
 }
@@ -39,8 +40,9 @@ WebDataRetriever::WebDataRetriever()
 //=============================================================================
 WebDataRetriever::~WebDataRetriever()
 {
-  // kptodo
-  //delete mResponsePtr;
+  if (mResponsePtr)
+    delete mResponsePtr;
+  mResponsePtr = nullptr;
 
   // Unsure what curl is doing internally with this ptr
   curl_easy_cleanup(mCurlHandle);
@@ -62,6 +64,15 @@ void WebDataRetriever::initInternal()
     return;
   }
 
+  // kptodo reserve size (?)
+  mResponsePtr = new std::string();
+  if (!mResponsePtr)
+  {
+    std::cout << "Failed to create mResponsePtr" << std::endl;
+    return;
+  }
+  mResponsePtr->reserve(4096);
+
   // Curl callbacks
   
   // Timeout: 10s
@@ -73,10 +84,8 @@ void WebDataRetriever::initInternal()
   // Write data callback
   curl_easy_setopt(mCurlHandle, CURLOPT_WRITEFUNCTION, handleResponse);
 
-  // kptodo benchmark setup
   // Hook up data container (curl write data uses void*)
-  //mResponsePtr = new std::string();
-  //curl_easy_setopt(mCurlHandle, CURLOPT_WRITEDATA, mResponsePtr);
+  curl_easy_setopt(mCurlHandle, CURLOPT_WRITEDATA, mResponsePtr);
 }
 
 //=============================================================================
@@ -100,6 +109,9 @@ void WebDataRetriever::sendRequest()
       "!mResponsePtr or !mCurlHandle" << std::endl;
     return;
   }
+
+  // kptodo
+  // assert all url params exist?
   
   std::string url;
   url.reserve(64);
@@ -111,11 +123,6 @@ void WebDataRetriever::sendRequest()
   // Set the URL
   curl_easy_setopt(mCurlHandle, CURLOPT_URL, url.c_str());
 
-  mResponsePtr = new std::string();
-  // kptodo reserve size (?)
-  mResponsePtr->reserve(4096);
-  curl_easy_setopt(mCurlHandle, CURLOPT_WRITEDATA, mResponsePtr);
-  
   // Send + curl response code
   mCurlCode = curl_easy_perform(mCurlHandle);
   
@@ -146,7 +153,9 @@ void WebDataRetriever::parseResponse(SymbolContainer& container)
   // Cast to std::string
   mResponse.reserve(mResponsePtr->size());
   mResponse = *mResponsePtr;
-  
+
+  // kptodo
+  // should this be in a try block?
   const json responseAsJson = json::parse(mResponse);
   
   // Something bad happened if status != ok
@@ -192,8 +201,6 @@ void WebDataRetriever::parseResponse(SymbolContainer& container)
   // Save to container
   container.insertSymbol(symbol, valuesContainer);
 
-  // kptodo is this req?
-  delete mResponsePtr;
-  mResponse.erase();
-  //mResponsePtr->erase();
+  // Clear for next query
+  mResponse.clear();
 }
