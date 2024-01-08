@@ -16,25 +16,42 @@
 
 //=============================================================================
 //=============================================================================
-TEST_CASE("WebDataRetriever", "[AAPL]")
+SCENARIO("Insert into SymbolContainer")
 {
-  WebDataRetriever w;
-  SymbolContainer symbols;
-  
-  // Randomly selected a small data set
-  w.setEndpoint("http://api.twelvedata.com");
-  w.setSymbol("AAPL");
-  w.setInterval("1h");
-  w.setStartDate("2022-02-01 09:30:00");
-  w.setEndDate("2022-02-01 15:30:00");
-  w.sendRequest();
-  w.parseResponse(symbols);
+  GIVEN("An empty SymbolContainer")
+  {
+    WebDataRetriever w;
+    SymbolContainer symbolContainer;
 
-  // Expected results
-  static constexpr int numExpectedTimestamps = 7;
+    // Validate assumption of the GIVEN clause
+    THEN("The container is empty")
+    {
+      REQUIRE(symbolContainer.getSymbols().size() == 0);
+    }
   
-  const auto AAPLIter = symbols.getSymbols().find("AAPL");
-  const int numAAPLTimestamps = static_cast<int>(AAPLIter->second.size());
-  
-  REQUIRE(numAAPLTimestamps ==  numExpectedTimestamps);
+    // Randomly selected a small data set (7 timestamps)
+    WHEN("The container inserts a new key")
+    {
+      w.setEndpoint("http://api.twelvedata.com");
+      w.setSymbol("AAPL");
+      w.setInterval("1h");
+      w.setStartDate("2022-02-01 09:30:00");
+      w.setEndDate("2022-02-01 15:30:00");
+      w.sendRequest();
+      w.parseResponse(symbolContainer);
+
+      THEN("1 key added to container")
+      {
+        REQUIRE(symbolContainer.getSymbols().size() == 1);
+      
+        AND_THEN("The key is mapped to 7 values")
+        {
+          const auto AAPLIter = symbolContainer.getSymbols().find("AAPL");
+          const int numAAPLTimestamps =
+            static_cast<int>(AAPLIter->second.size());
+          REQUIRE(numAAPLTimestamps == 7);
+        }
+      }
+    }
+  }
 }
