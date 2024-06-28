@@ -7,10 +7,10 @@
 #include <iostream>
 
 // kptodo rip this out into a more formal testing structure
-static constexpr int debugPrintTimestamps = 0;
-static constexpr int numExpectedTimestamps = 7;
-static constexpr int numExpectedTimestamps2 = 10;
-static constexpr int numExpectedQQQTimestamps = 7;
+//static constexpr int debugPrintTimestamps = 0;
+//static constexpr int numExpectedTimestamps = 7;
+//static constexpr int numExpectedTimestamps2 = 10;
+//static constexpr int numExpectedQQQTimestamps = 7;
 
 //=============================================================================
 // Compiler complaining about unused function params

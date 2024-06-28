@@ -35,8 +35,8 @@ SCENARIO("Insert into SymbolContainer")
       w.setEndpoint("http://api.twelvedata.com");
       w.setSymbol("AAPL");
       w.setInterval("1h");
-      w.setStartDate("2022-02-01 09:30:00");
-      w.setEndDate("2022-02-01 15:30:00");
+      w.setStartDate("2022-02-01%2009:30:00");
+      w.setEndDate("2022-02-01%2015:30:00");
       w.sendRequest();
       w.parseResponse(symbolContainer);
 

@@ -24,7 +24,7 @@ public:
 
   void sendRequest();
   void parseResponse(SymbolContainer& container);
-  bool responseOk() const { return mHttpCode != 200 || mCurlCode != 200; }
+  bool responseOk() const { return mHttpCode == 200 && mCurlCode == CURLE_OK; }
   int getHttpCode() const { return mHttpCode; }
   int getCurlCode() const { return mCurlCode; }
   
