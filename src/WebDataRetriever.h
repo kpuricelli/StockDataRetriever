@@ -23,15 +23,16 @@ public:
   void setPrecision(int value) { mPrecision = value; }
 
   void sendRequest();
-  void parseResponse(SymbolContainer& container);
-  bool responseOk() const { return mHttpCode == 200 && mCurlCode == CURLE_OK; }
+  void parseJsonFile(SymbolContainer& container);
+  void writeResponse2File(const std::string& filename);
   int getHttpCode() const { return mHttpCode; }
   int getCurlCode() const { return mCurlCode; }
+  void getFileName(std::string& filename);
   
 private:
   
   void initInternal();
-  void checkResponseStatus();
+  bool isResponseOk();
   
   CURL* mCurlHandle;
 

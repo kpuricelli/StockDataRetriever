@@ -3,6 +3,7 @@
 #include "Json.hpp"
 #include <map>
 #include <iostream>
+#include <fstream>
 
 //
 // kptodo / thoughts
@@ -92,11 +93,37 @@ void WebDataRetriever::initInternal()
 // Print out some more info if we get a non-ok status from either curl
 // or http
 //=============================================================================
-void WebDataRetriever::checkResponseStatus()
+bool WebDataRetriever::isResponseOk()
 {
-  std::cout << "\nErrors in http or curl response with codes: "
-            << "httpcode: " << mHttpCode << std::endl;
-  std::cout << "\n curlcode: " << mCurlCode << std::endl;
+  bool noError = true;
+  
+  if (mHttpCode != 200)
+  {
+    std::cout << "HTTP Status Code: " << mHttpCode << std::endl;
+    noError = false;
+  }
+
+  if (mCurlCode != CURLE_OK)
+  {
+    std::cout << "cURL Status Code: " << mCurlCode << std::endl;
+    noError = false;
+  }
+
+  if (!mResponsePtr)
+  {
+    std::cout << "!mResponsePtr" << std::endl;
+    noError = false;
+  }
+
+  // kptodo is this a necessary check?
+  // Size of the response is zero, but with no errors
+  if (mResponsePtr && mResponsePtr->size() == 0)
+  {
+    std::cout << "mResponsePtr->size() is zero" << std::endl;
+    noError = false;
+  }
+
+  return noError;
 }
 
 //=============================================================================
@@ -105,13 +132,19 @@ void WebDataRetriever::sendRequest()
 {
   if (!mResponsePtr || !mCurlHandle)
   {
-    std::cout << "WebDataRetriever::sendRequest(): "
-      "!mResponsePtr or !mCurlHandle" << std::endl;
+    if (!mResponsePtr)
+      std::cout << "WebDataRetriever::sendRequest(): !mResponsePtr"
+		<< std::endl;
+    if (!mCurlHandle)
+      std::cout << "WebDataRetriever::sendRequest(): !mCurlHandle"
+		<< std::endl;
+    std::cout << "Returning...\n" << std::endl;
     return;
   }
 
   // kptodo
   // assert all url params exist?
+  // is there a way for curl to assert a url is valid?
   
   std::string url;
   url.reserve(64);
@@ -132,28 +165,11 @@ void WebDataRetriever::sendRequest()
 
 //=============================================================================
 //=============================================================================
-void WebDataRetriever::parseResponse(SymbolContainer& container)
+void WebDataRetriever::parseJsonFile(SymbolContainer& /*container*/)
 {
-  // Sanity check
-  if (!mResponsePtr)
-  {
-    std::cout << "WebDataRetriever::parseResponse: mResponsePtr is null!"
-              << std::endl;
-    return;
-  }
-
-  // If we got an non-good status code frin either curl or http, investigate
-  if (!responseOk())
-  {
-    checkResponseStatus();
-    std::cout << "WebDataRetriever::parseResponse: !responseOk()" << std::endl;
-    return;
-  }
-  
-  // Cast to std::string
-  mResponse.reserve(mResponsePtr->size());
-  mResponse = *mResponsePtr;
-
+  // kptodo
+  // Open the file
+#if 0
   // kptodo
   // should this be in a try block?
   const json responseAsJson = json::parse(mResponse);
@@ -201,6 +217,40 @@ void WebDataRetriever::parseResponse(SymbolContainer& container)
   // Save to container
   container.insertSymbol(symbol, valuesContainer);
 
-  // Clear for next query
-  mResponse.clear();
+  // kptodo
+#endif
+}
+
+//=============================================================================
+//=============================================================================
+void WebDataRetriever::writeResponse2File(const std::string& /*filename*/)
+{
+  if (!isResponseOk())
+  {
+    // kptodo how to continue to the next request?
+    return;
+  }
+  
+  // Cast to std::string
+  mResponse.reserve(mResponsePtr->size());
+  mResponse = *mResponsePtr;
+
+  std::ofstream inputFile("../../json/test.json");
+  if (inputFile.is_open())
+  {
+    inputFile << mResponse;
+    inputFile.close();
+  }
+  else
+    std::cout << "Unable to open input file!" << std::endl;
+}
+
+//=============================================================================
+//=============================================================================
+void WebDataRetriever::getFileName(std::string& filename)
+{
+  std::string startDate = mStartDate;
+  
+  filename = mSymbol + "_" + mStartDate + ".json";
+  std::cout << filename << std::endl;
 }

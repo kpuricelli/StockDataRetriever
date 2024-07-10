@@ -6,9 +6,15 @@
 #include "SymbolContainer.h"
 #include <iostream>
 
+// kptodo
+#include <boost/date_time/gregorian/gregorian.hpp> //include all types plus i/o
+// or
+//#include "boost/date_time/gregorian/gregorian_types.hpp" //no i/o just types
+
+
 // kptodo rip this out into a more formal testing structure
 //static constexpr int debugPrintTimestamps = 0;
-//static constexpr int numExpectedTimestamps = 7;
+//static constexpr unsigned long numExpectedTimestamps = 7;
 //static constexpr int numExpectedTimestamps2 = 10;
 //static constexpr int numExpectedQQQTimestamps = 7;
 
@@ -17,7 +23,28 @@
 //=============================================================================
 int main(/*int argc, char* argv[]*/)
 {
-  // kptodo move all this to some testing file
+  // kptodo looking into boost datetime iters
+  using namespace boost::gregorian;
+
+  // kptodo year by year
+  for (unsigned short month = 1; month <= 12; ++month)
+  {
+    // Use the calendar to get the last day of the month
+    auto eom_day = gregorian_calendar::end_of_month_day(2025, month);
+    date endOfMonth(2025, month, eom_day);
+
+    // Construct an iterator starting with firt day of the month
+    day_iterator ditr(date(2025, month, 1));
+    // Loop thru the days and print each one
+    for (; ditr <= endOfMonth; ++ditr)
+    {
+      std::cout << to_simple_string(*ditr) << std::endl;
+    }
+  }
+  
+  // kptodo
+  // do this after date time stuff
+  // move all this to some testing file
 #if 0
   WebDataRetriever w;
   SymbolContainer symbols;
@@ -26,14 +53,21 @@ int main(/*int argc, char* argv[]*/)
   w.setEndpoint("http://api.twelvedata.com");
   w.setSymbol("AAPL");
   w.setInterval("1h");
-  w.setStartDate("2022-02-01 09:30:00");
-  w.setEndDate("2022-02-01 15:30:00");
+  w.setStartDate("2022-02-01%2009:30:00");
+  w.setEndDate("2022-02-01%2015:30:00");
   w.sendRequest();
-  w.parseResponse(symbols);
-
+  std::string filename;
+  w.getFileName(filename);
+  //w.writeResponse2File();
+  //w.parseResponse(symbols);
+#endif
+  
+  // kptodo
+#if 0
+  
   // First test: insert symbol timestamps into empty container
   auto AAPLIter = symbols.getSymbols().find("AAPL");
-  const int numAAPLTimestamps = AAPLIter->second.size();
+  const auto numAAPLTimestamps = AAPLIter->second.size();
   std::cout << "\nTest 1: inserting new symbol with 7 timestamps"
             << std::endl;
   std::cout << "Expected: " << numExpectedTimestamps << std::endl;
@@ -42,8 +76,8 @@ int main(/*int argc, char* argv[]*/)
   if (numAAPLTimestamps != numExpectedTimestamps)
     std::cout << "Test result: Fail!" << std::endl;
   else
-    std::cout << "Test result: Pass!" << std::endl;    
-    
+    std::cout << "Test result: Pass!" << std::endl;
+  
   // Randomly selected another small data set (7 days later; 3 timestamps)
   w.setStartDate("2022-02-08 09:30:00");
   w.setEndDate("2022-02-08 11:30:00");
