@@ -27,6 +27,7 @@ int main(/*int argc, char* argv[]*/)
   using namespace boost::gregorian;
 
   // kptodo year by year
+  // kptodo want only weekdays and no holidays
   for (unsigned short month = 1; month <= 12; ++month)
   {
     // Use the calendar to get the last day of the month
