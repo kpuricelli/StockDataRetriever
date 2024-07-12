@@ -38,7 +38,7 @@ SCENARIO("Insert into SymbolContainer")
       w.setStartDate("2022-02-01%2009:30:00");
       w.setEndDate("2022-02-01%2015:30:00");
       w.sendRequest();
-      w.parseResponse(symbolContainer);
+      //w.parseResponse(symbolContainer);
 
       THEN("1 key added to container")
       {

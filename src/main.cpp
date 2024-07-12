@@ -5,6 +5,7 @@
 #include "WebDataRetriever.h"
 #include "SymbolContainer.h"
 #include <iostream>
+#include <set>
 
 // kptodo
 #include <boost/date_time/gregorian/gregorian.hpp> //include all types plus i/o
@@ -27,22 +28,97 @@ int main(/*int argc, char* argv[]*/)
   using namespace boost::gregorian;
 
   // kptodo year by year
-  // kptodo want only weekdays and no holidays
+  unsigned short year = 2024;
+
+  //
+  // kptodo
+  // good friday..unsure how to calculate that yet (stub below)
+  //
+  // Market half days:
+  // 3 July (1pm est)
+  // 29 November (1pm est)
+  // 24 December (0930 est)
+  //
+  
+  // Holidays change year by year, so need to recalc 4 each year
+  std::vector<year_based_generator*> holidays;
+
+  //
+  // Fixed holidays
+  //
+  
+  // Western NY
+  holidays.push_back(new partial_date(1, Jan));
+
+  // Juneteenth
+  holidays.push_back(new partial_date(19, Jun));
+
+  // US Independence Day
+  holidays.push_back(new partial_date(4, Jul));
+
+  // Christmas Day
+  holidays.push_back(new partial_date(25, Dec));
+
+  //
+  // Rotating holidays
+  //
+  
+  // nth_day_of_week_in_month is way too long
+  typedef nth_day_of_the_week_in_month nth_dow;
+    
+  // MLK Day
+  holidays.push_back(new nth_dow(nth_dow::third, Monday, Jan));
+  
+  // President's Day
+  holidays.push_back(new nth_dow(nth_dow::third, Monday, Feb));
+
+  // kptodo good friday
+
+  // Memorial Day
+  holidays.push_back(new nth_dow(nth_dow::fourth, Monday, May));
+
+  // US Labor Day
+  holidays.push_back(new nth_dow(nth_dow::first, Monday, Sep));
+  
+  // Thanksgiving
+  holidays.push_back(new nth_dow(nth_dow::fourth, Thursday, Nov)); 
+
+  std::set<date> all_holidays;
+    
+  for(std::vector<year_based_generator*>::iterator it = holidays.begin();
+      it != holidays.end(); ++it)
+  {
+    all_holidays.insert((*it)->get_date(year));
+  }
+
+  // kptodo rm
+  for (std::set<date>::iterator it = all_holidays.begin();
+       it != all_holidays.end(); ++it)
+    std::cout << to_iso_extended_string(*it) << std::endl;
+    
+  std::cout << "Number Holidays: " << all_holidays.size() << std::endl;
+
+#if 0
+  // For each month
   for (unsigned short month = 1; month <= 12; ++month)
   {
     // Use the calendar to get the last day of the month
-    auto eom_day = gregorian_calendar::end_of_month_day(2025, month);
-    date endOfMonth(2025, month, eom_day);
+    auto eom_day = gregorian_calendar::end_of_month_day(year, month);
+    date endOfMonth(year, month, eom_day);
 
-    // Construct an iterator starting with firt day of the month
-    day_iterator ditr(date(2025, month, 1));
-    // Loop thru the days and print each one
+    // For each day
+    day_iterator ditr(date(year, month, 1));
     for (; ditr <= endOfMonth; ++ditr)
     {
-      std::cout << to_simple_string(*ditr) << std::endl;
+      // Skip all weekends
+      if ((*ditr).day_of_week() == Saturday || (*ditr).day_of_week() == Sunday)
+	continue;
+
+      
+      std::cout << to_iso_extended_string(*ditr) << std::endl;
     }
   }
-  
+#endif
   // kptodo
   // do this after date time stuff
   // move all this to some testing file
