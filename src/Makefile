@@ -1,7 +1,7 @@
 #==============================================================================
 # Makefile to build the src executable
 #==============================================================================
-include ../Makefile.common.defs
+include ../Makefile.common.defs.mk
 
 # Executable name
 PROGNAME := StockDataRetriever

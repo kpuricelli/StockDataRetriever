@@ -10,10 +10,6 @@ OS := $(shell uname -s).$(shell uname -m)
 PROJ_ROOT := $(shell bash -cf "pwd | sed -e 's:\(.*\)/src\(.*\):\1:'")
 TEST_ROOT := $(shell bash -cf "pwd | sed -e 's:\(.*\)/tests\(.*\):\1:'")
 
-# kptodo fix this on mac
-RHEL := \
-$(shell bash -c "cat /etc/redhat-release | sed 's/[a-zA-Z ]*//;s/\..*//'")
-
 #==============================================================================
 # Directories
 #==============================================================================
@@ -24,7 +20,7 @@ PROJ_BIN_DIR := $(PROJ_ROOT)/bin/$(OBJ_DIR)
 TEST_BIN_DIR := $(TEST_ROOT)/bin/$(OBJ_DIR)
 
 #==============================================================================
-# Compiler defs
+# Compiler flags
 #==============================================================================
 CXX := g++ -std=c++20
 OptFlags := -O2
@@ -49,7 +45,11 @@ CXX_WARN := -Wall -Werror -Wextra -Wconversion -pedantic
 CXXFLAGS := $(CXX_WARN) $(CXX_DEBUG) $(CXX_OPTIMIZE)
 
 # Libs
-LDLIBS := -lcurl -I/usr/local/Cellar/boost/1.85.0/include/boost 
+ifeq (, $(findstring Linux, $($(shell uname -s))))
+  LDLIBS := -lcurl -I/usr/include/boost 
+else
+  LDLIBS := -lcurl -I/usr/local/Cellar/boost/1.85.0/include/boost
+endif
 
 #===============================================================================
 # Targets: none

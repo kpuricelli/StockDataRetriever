@@ -8,7 +8,7 @@
 # only compile tests if the src object files exist
 #
 
-include ../Makefile.common.defs
+include ../Makefile.common.defs.mk
 
 # Executable name
 PROGNAME := RunTests
