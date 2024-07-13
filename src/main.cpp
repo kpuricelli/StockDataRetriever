@@ -4,14 +4,9 @@
 
 #include "WebDataRetriever.h"
 #include "SymbolContainer.h"
+//#include "Calendar.h"
 #include <iostream>
 #include <set>
-
-// kptodo
-#include <boost/date_time/gregorian/gregorian.hpp> //include all types plus i/o
-// or
-//#include "boost/date_time/gregorian/gregorian_types.hpp" //no i/o just types
-
 
 // kptodo rip this out into a more formal testing structure
 //static constexpr int debugPrintTimestamps = 0;
@@ -24,81 +19,33 @@
 //=============================================================================
 int main(/*int argc, char* argv[]*/)
 {
-  // kptodo looking into boost datetime iters
-  using namespace boost::gregorian;
-
-  // kptodo year by year
-  unsigned short year = 2024;
-
-  //
-  // kptodo
-  // good friday..unsure how to calculate that yet (stub below)
-  //
-  // Market half days:
-  // 3 July (1pm est)
-  // 29 November (1pm est)
-  // 24 December (0930 est)
-  //
   
-  // Holidays change year by year, so need to recalc 4 each year
-  std::vector<year_based_generator*> holidays;
-
-  //
-  // Fixed holidays
-  //
+#if 1
+  WebDataRetriever w;
+  SymbolContainer symbols;
   
-  // Western NY
-  holidays.push_back(new partial_date(1, Jan));
+  // Randomly selected a small data set
+  w.setEndpoint("http://api.twelvedata.com");
+  w.setSymbol("AAPL");
+  w.setInterval("1h");
 
-  // Juneteenth
-  holidays.push_back(new partial_date(19, Jun));
+  // calendar stuff
+  w.setYear(2024);
+  w.setStartMonth(2);
+  w.setEndMonth(2);
+  w.setStartDay(1);
+  w.setEndDay(1);
+  w.getUrls();
 
-  // US Independence Day
-  holidays.push_back(new partial_date(4, Jul));
-
-  // Christmas Day
-  holidays.push_back(new partial_date(25, Dec));
-
-  //
-  // Rotating holidays
-  //
+#endif
   
-  // nth_day_of_week_in_month is way too long
-  typedef nth_day_of_the_week_in_month nth_dow;
-    
-  // MLK Day
-  holidays.push_back(new nth_dow(nth_dow::third, Monday, Jan));
-  
-  // President's Day
-  holidays.push_back(new nth_dow(nth_dow::third, Monday, Feb));
-
-  // kptodo good friday
-
-  // Memorial Day
-  holidays.push_back(new nth_dow(nth_dow::fourth, Monday, May));
-
-  // US Labor Day
-  holidays.push_back(new nth_dow(nth_dow::first, Monday, Sep));
-  
-  // Thanksgiving
-  holidays.push_back(new nth_dow(nth_dow::fourth, Thursday, Nov)); 
-
-  std::set<date> all_holidays;
-    
-  for(std::vector<year_based_generator*>::iterator it = holidays.begin();
-      it != holidays.end(); ++it)
-  {
-    all_holidays.insert((*it)->get_date(year));
-  }
-
-  // kptodo rm
-  for (std::set<date>::iterator it = all_holidays.begin();
-       it != all_holidays.end(); ++it)
-    std::cout << to_iso_extended_string(*it) << std::endl;
-    
-  std::cout << "Number Holidays: " << all_holidays.size() << std::endl;
-
+  // kptodo need to add into calendar  
 #if 0
+  
+  using namespace boost::gregorian;
+  
+  unsigned short year = 2024;
+  
   // For each month
   for (unsigned short month = 1; month <= 12; ++month)
   {
@@ -114,7 +61,7 @@ int main(/*int argc, char* argv[]*/)
       if ((*ditr).day_of_week() == Saturday || (*ditr).day_of_week() == Sunday)
 	continue;
 
-      
+      // kptodo rm
       std::cout << to_iso_extended_string(*ditr) << std::endl;
     }
   }
@@ -134,7 +81,7 @@ int main(/*int argc, char* argv[]*/)
   w.setEndDate("2022-02-01%2015:30:00");
   w.sendRequest();
   std::string filename;
-  w.getFileName(filename);
+  //w.getFileName(filename);
   //w.writeResponse2File();
   //w.parseResponse(symbols);
 #endif

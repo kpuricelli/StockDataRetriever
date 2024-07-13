@@ -34,6 +34,9 @@ namespace
 WebDataRetriever::WebDataRetriever()
   : mCurlHandle(nullptr), mResponsePtr(nullptr)
 {
+  // kptodo put this in an environment variable
+  mApiKey = "cfa77bb3562b4677aed66bcc63659505";
+  
   initInternal();
 }
 
@@ -54,9 +57,6 @@ WebDataRetriever::~WebDataRetriever()
 //=============================================================================
 void WebDataRetriever::initInternal()
 {
-  // kptodo hide this somewhere if this repo ever becomes public
-  mApiKey = "cfa77bb3562b4677aed66bcc63659505";
-
   // curl lib
   mCurlHandle = curl_easy_init();
   if (!mCurlHandle)
@@ -145,16 +145,20 @@ void WebDataRetriever::sendRequest()
   // kptodo
   // assert all url params exist?
   // is there a way for curl to assert a url is valid?
-  
+
+#if 0
   std::string url;
   url.reserve(64);
-  
+
+  // kptodo hardcode market open / end times (except for half days?)
   url += mEndpoint + "/time_series?apikey=" + mApiKey + "&interval="
     + mInterval + "&symbol=" + mSymbol + "&start_date=" + mStartDate
     + "&end_date=" + mEndDate + "&format=JSON";
+#endif
 
+  // kptodo
   // Set the URL
-  curl_easy_setopt(mCurlHandle, CURLOPT_URL, url.c_str());
+  //curl_easy_setopt(mCurlHandle, CURLOPT_URL, url.c_str());
 
   // Send + curl response code
   mCurlCode = curl_easy_perform(mCurlHandle);
@@ -249,6 +253,7 @@ void WebDataRetriever::writeResponse2File(const std::string& /*filename*/)
 //=============================================================================
 void WebDataRetriever::getFileName(std::string& filename)
 {
+  // kptodo prob junk this with the addition of calendar
   std::string startDate = mStartDate;
   
   filename = mSymbol + "_" + mStartDate + ".json";
