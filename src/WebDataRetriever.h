@@ -23,14 +23,12 @@ public:
   void setInterval(const std::string& str) { mInterval = str; }
   void setPrecision(int value) { mPrecision = value; }
 
-#if 1
   // API endpoint parameters mCalendar owns
   void setYear(unsigned short year) { mCalendar.setYear(year); }
   void setStartMonth(unsigned short month) { mCalendar.setStartMonth(month); }
   void setEndMonth(unsigned short month) { mCalendar.setEndMonth(month); }
   void setStartDay(unsigned short day) { mCalendar.setStartDay(day); }
   void setEndDay(unsigned short day) { mCalendar.setEndDay(day); }
-#endif
   
   // Status codes
   int getHttpCode() const { return mHttpCode; }

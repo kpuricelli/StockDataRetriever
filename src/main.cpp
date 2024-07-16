@@ -20,11 +20,11 @@
 int main(/*int argc, char* argv[]*/)
 {
   
-#if 1
   WebDataRetriever w;
   SymbolContainer symbols;
   
   // Randomly selected a small data set
+  // kptodo endpoint probably doesn't need 2b set
   w.setEndpoint("http://api.twelvedata.com");
   w.setSymbol("AAPL");
   w.setInterval("1h");
@@ -35,57 +35,29 @@ int main(/*int argc, char* argv[]*/)
   w.setEndMonth(2);
   w.setStartDay(1);
   w.setEndDay(1);
-  w.getUrls();
-
-#endif
-  
-  // kptodo need to add into calendar  
-#if 0
-  
-  using namespace boost::gregorian;
-  
-  unsigned short year = 2024;
-  
-  // For each month
-  for (unsigned short month = 1; month <= 12; ++month)
-  {
-    // Use the calendar to get the last day of the month
-    auto eom_day = gregorian_calendar::end_of_month_day(year, month);
-    date endOfMonth(year, month, eom_day);
-
-    // For each day
-    day_iterator ditr(date(year, month, 1));
-    for (; ditr <= endOfMonth; ++ditr)
-    {
-      // Skip all weekends
-      if ((*ditr).day_of_week() == Saturday || (*ditr).day_of_week() == Sunday)
-	continue;
-
-      // kptodo rm
-      std::cout << to_iso_extended_string(*ditr) << std::endl;
-    }
-  }
-#endif
-  // kptodo
-  // do this after date time stuff
-  // move all this to some testing file
-#if 0
-  WebDataRetriever w;
-  SymbolContainer symbols;
-  
-  // Randomly selected a small data set
-  w.setEndpoint("http://api.twelvedata.com");
-  w.setSymbol("AAPL");
-  w.setInterval("1h");
-  w.setStartDate("2022-02-01%2009:30:00");
-  w.setEndDate("2022-02-01%2015:30:00");
   w.sendRequest();
+  //w.getUrls();
   std::string filename;
-  //w.getFileName(filename);
-  //w.writeResponse2File();
-  //w.parseResponse(symbols);
-#endif
+  w.getFileName(filename);
+  w.writeResponse2File(filename);
   
+  // kptodo
+#if 0
+  WebDataRetriever w2;
+  SymbolContainer symbols2;
+
+  // Randomly selected a small data set
+  w2.setEndpoint("http://api.twelvedata.com");
+  w2.setSymbol("AAPL");
+  w2.setInterval("1h");
+  w2.setStartDate("2022-02-01%2009:30:00");
+  w2.setEndDate("2022-02-01%2015:30:00");
+  w2.sendRequest();
+  std::string filename;
+  w2.getFileName(filename);
+  w2.w2riteResponse2File();
+  //w2.parseResponse(symbols2);
+#endif
   // kptodo
 #if 0
   

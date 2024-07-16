@@ -33,6 +33,11 @@ public:
   void setStartDay(unsigned short day) { mStartDay = day; }
   void setEndDay(unsigned short day) { mEndDay = day; }
 
+  std::string getYear() { return std::to_string(mYear); }
+  std::string getMonth() { return std::to_string(mStartMonth); }
+  std::string getDay() { return std::to_string(mStartDay); }
+
+
   // Construct a list of urls for WebDataRetriever to loop over
   void generateUrls(std::vector<std::string>& urlList,
                     const std::string& endpoint,

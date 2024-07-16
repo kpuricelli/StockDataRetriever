@@ -146,19 +146,12 @@ void WebDataRetriever::sendRequest()
   // assert all url params exist?
   // is there a way for curl to assert a url is valid?
 
-#if 0
-  std::string url;
-  url.reserve(64);
-
-  // kptodo hardcode market open / end times (except for half days?)
-  url += mEndpoint + "/time_series?apikey=" + mApiKey + "&interval="
-    + mInterval + "&symbol=" + mSymbol + "&start_date=" + mStartDate
-    + "&end_date=" + mEndDate + "&format=JSON";
-#endif
-
   // kptodo
+  getUrls();
+  const std::string url = mUrlList[0];
+  
   // Set the URL
-  //curl_easy_setopt(mCurlHandle, CURLOPT_URL, url.c_str());
+  curl_easy_setopt(mCurlHandle, CURLOPT_URL, url.c_str());
 
   // Send + curl response code
   mCurlCode = curl_easy_perform(mCurlHandle);
@@ -227,19 +220,22 @@ void WebDataRetriever::parseJsonFile(SymbolContainer& /*container*/)
 
 //=============================================================================
 //=============================================================================
-void WebDataRetriever::writeResponse2File(const std::string& /*filename*/)
+void WebDataRetriever::writeResponse2File(const std::string& filename)
 {
+  // kptodo this feels like it shouldn't b here
+#if 0
   if (!isResponseOk())
   {
     // kptodo how to continue to the next request?
     return;
   }
+#endif
   
   // Cast to std::string
   mResponse.reserve(mResponsePtr->size());
   mResponse = *mResponsePtr;
 
-  std::ofstream inputFile("../../json/test.json");
+  std::ofstream inputFile(filename);
   if (inputFile.is_open())
   {
     inputFile << mResponse;
@@ -253,9 +249,7 @@ void WebDataRetriever::writeResponse2File(const std::string& /*filename*/)
 //=============================================================================
 void WebDataRetriever::getFileName(std::string& filename)
 {
-  // kptodo prob junk this with the addition of calendar
-  std::string startDate = mStartDate;
-  
-  filename = mSymbol + "_" + mStartDate + ".json";
-  std::cout << filename << std::endl;
+  // kptodo much data can one file hold?
+  filename = mSymbol + "_" + mCalendar.getYear() + "_" + mCalendar.getMonth()
+    + "_" + mCalendar.getDay() + ".json";
 }
