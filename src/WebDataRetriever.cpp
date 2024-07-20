@@ -4,6 +4,7 @@
 #include <map>
 #include <iostream>
 #include <fstream>
+#include <chrono>
 
 //
 // kptodo / thoughts
@@ -57,7 +58,7 @@ WebDataRetriever::~WebDataRetriever()
 //=============================================================================
 void WebDataRetriever::initInternal()
 {
-  // curl lib
+  // curl setup
   mCurlHandle = curl_easy_init();
   if (!mCurlHandle)
   {
@@ -128,7 +129,58 @@ bool WebDataRetriever::isResponseOk()
 
 //=============================================================================
 //=============================================================================
-void WebDataRetriever::sendRequest()
+void WebDataRetriever::sendRangeOfRequests()
+{
+  // kptodo sanity check the time span
+
+  // Get the URLs for the given time span
+  getUrls();
+
+  if (mUrlList.empty())
+  {
+    std::cout << "WebDataRetriever::sendRangeOfRequests(): "
+	      <<  "no URLs generated for given time span" << std::endl;
+    return;
+  }
+
+  // For each url
+  for (const auto& url : mUrlList)
+  {
+    // kptodo
+    // the free plan i'm on has a limit of 8 requests per minute
+
+    // Time at first url request
+    const auto start = std::chrono::high_resolution_clock::now();
+    
+    sendRequest(url);
+
+    // Check the status of the request
+    if (!isResponseOk())
+    {
+      // kptodo if not ok, do something about the time
+      std::cout << "!Response ok for url: "
+		<< url << std::endl;
+      std::cout << "Skipping to next url..." << std::endl;
+      continue;
+    }
+
+    std::string filename;
+    getFileName(filename);
+    writeResponse2File(filename);
+
+    // Elapsed time between when we hit the endpoint and now
+    //using namespace std::chrono_literals;
+    const auto end = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<double, std::milli> elapsed =
+      end - start;
+    
+    std::cout << "Request took: " << elapsed.count() << "ms" << std::endl;
+  }
+}
+
+//=============================================================================
+//=============================================================================
+void WebDataRetriever::sendRequest(const std::string& url)
 {
   if (!mResponsePtr || !mCurlHandle)
   {
@@ -142,14 +194,6 @@ void WebDataRetriever::sendRequest()
     return;
   }
 
-  // kptodo
-  // assert all url params exist?
-  // is there a way for curl to assert a url is valid?
-
-  // kptodo
-  getUrls();
-  const std::string url = mUrlList[0];
-  
   // Set the URL
   curl_easy_setopt(mCurlHandle, CURLOPT_URL, url.c_str());
 
@@ -222,15 +266,6 @@ void WebDataRetriever::parseJsonFile(SymbolContainer& /*container*/)
 //=============================================================================
 void WebDataRetriever::writeResponse2File(const std::string& filename)
 {
-  // kptodo this feels like it shouldn't b here
-#if 0
-  if (!isResponseOk())
-  {
-    // kptodo how to continue to the next request?
-    return;
-  }
-#endif
-  
   // Cast to std::string
   mResponse.reserve(mResponsePtr->size());
   mResponse = *mResponsePtr;
@@ -241,6 +276,8 @@ void WebDataRetriever::writeResponse2File(const std::string& filename)
     inputFile << mResponse;
     inputFile.close();
   }
+
+  // kptodo do something about this error
   else
     std::cout << "Unable to open input file!" << std::endl;
 }
@@ -250,6 +287,7 @@ void WebDataRetriever::writeResponse2File(const std::string& filename)
 void WebDataRetriever::getFileName(std::string& filename)
 {
   // kptodo much data can one file hold?
+  // kptodo move to a diff directory
   filename = mSymbol + "_" + mCalendar.getYear() + "_" + mCalendar.getMonth()
     + "_" + mCalendar.getDay() + ".json";
 }

@@ -27,19 +27,19 @@ int main(/*int argc, char* argv[]*/)
   // kptodo endpoint probably doesn't need 2b set
   w.setEndpoint("http://api.twelvedata.com");
   w.setSymbol("AAPL");
-  w.setInterval("1h");
+  w.setInterval("1min");
 
   // calendar stuff
-  w.setYear(2024);
-  w.setStartMonth(2);
-  w.setEndMonth(2);
+  w.setYear(2023);
+  w.setStartMonth(12);
+  w.setEndMonth(12);
   w.setStartDay(1);
   w.setEndDay(1);
-  w.sendRequest();
+  w.sendRangeOfRequests();
   //w.getUrls();
-  std::string filename;
-  w.getFileName(filename);
-  w.writeResponse2File(filename);
+  //std::string filename;
+  //w.getFileName(filename);
+  //w.writeResponse2File(filename);
   
   // kptodo
 #if 0

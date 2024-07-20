@@ -10,11 +10,10 @@ namespace
 
 //=============================================================================
 //=============================================================================
-Calendar::Calendar(unsigned short year)
-  : mYear(year)
+Calendar::Calendar(unsigned short year, unsigned short endDay)
+  : mYear(year), mEndDay(endDay)
 {
   addAllMarketHolidays();
-  generateAllHolidaysForYear();
 }
 
 //=============================================================================
@@ -29,7 +28,6 @@ Calendar::~Calendar()
 void Calendar::setYear(unsigned short year)
 {
   mYear = year;
-  addAllMarketHolidays();
   generateAllHolidaysForYear();
 }
 
@@ -47,29 +45,16 @@ void Calendar::generateUrls(std::vector<std::string>& urlList,
   // For gathering all data, want to do all months
   //
   
-  // kptodo rm
-  std::cout << "Calendar::generateUrls(...)" << std::endl;
-  
   // For each month
   for (unsigned short month = mStartMonth; month <= mEndMonth; ++month)
   {
-    // kptodo
-    // For all days in the month, uncomment
-    // Use the calendar to get the last day of the current month
-    // auto eom_day = gregorian_calendar::end_of_month_day(mYear, month);
+    // If mEndDay == 0, create a url for each day in the month,
+    // otherwise, use the given end day
+    auto eom_day = gregorian_calendar::end_of_month_day(mYear, month);
 
-    // kptodo
-    // For all days in the month:
-    // date endOfMonth(mYear, month, eom_day);
-    //
-    // For testing (may not be the actual end of month):
-    date endOfMonth(mYear, month, mEndDay);
-    
-    //
-    // kptodo
-    // For testing: specify the start / end day
-    // For gathering all data, want to do all days
-    //
+    date endOfMonth = (mEndDay == 0) ?
+      boost::gregorian::date(mYear, month, eom_day) :
+      boost::gregorian::date(mYear, month, mEndDay);
     
     // For each day
     day_iterator ditr(date(mYear, month, mStartDay));
@@ -77,9 +62,20 @@ void Calendar::generateUrls(std::vector<std::string>& urlList,
     {
       // Skip all weekends
       if ((*ditr).day_of_week() == Saturday || (*ditr).day_of_week() == Sunday)
+      {
+	std::cout << "Skipping weekend on date: "
+		  << to_iso_extended_string(*ditr) << std::endl;
 	continue;
+      }
 
-      // kptodo skip all holidays
+      // Skip all holidays
+      if (mAllHolidays.contains(*ditr))
+      {
+	// kptodo rm cout
+	std::cout << "Skipping market holiday on date: "
+		  << to_iso_extended_string(*ditr) << std::endl;
+	continue;
+      }
 
       std::string url;
       url.reserve(128);
@@ -94,9 +90,11 @@ void Calendar::generateUrls(std::vector<std::string>& urlList,
   }
 
   // kptodo rm
+#if 0
   std::cout << "Created " << urlList.size() << " urls" << std::endl;
   for (const auto& i : urlList)
-    std::cout << i << std::endl;  
+    std::cout << i << std::endl;
+#endif
 }
 
 //=============================================================================
@@ -160,7 +158,11 @@ void Calendar::addAllMarketHolidays()
 void Calendar::generateAllHolidaysForYear()
 {
   if (mYear <= 0)
+  {
+    std::cout << "Calendar::generateAllHolidaysForYear(): "
+	      << "invalid year: " << mYear << std::endl;
     return;
+  }
       
   for (std::vector<year_based_generator*>::iterator it = mHolidays.begin();
       it != mHolidays.end(); ++it)
@@ -169,10 +171,12 @@ void Calendar::generateAllHolidaysForYear()
   }
 
   // kptodo rm
+#if 0
   for (std::set<date>::iterator it = mAllHolidays.begin();
        it != mAllHolidays.end(); ++it)
     std::cout << to_iso_extended_string(*it) << std::endl;
     
   std::cout << "Number o Holidays: " << mAllHolidays.size() << std::endl;
+#endif
 }
 

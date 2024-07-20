@@ -16,8 +16,12 @@
 class Calendar
 {
 public:
-  
-  Calendar(unsigned short year = 0);
+
+  // If mEndDay is == 0, calendar will calculate the end of month day for
+  // the current month
+  // Essentially if no end day is set, will generate a url for each day of
+  // the current month
+  Calendar(unsigned short year = 0, unsigned short endDay = 0);
   ~Calendar();
 
   //
@@ -25,7 +29,8 @@ public:
   // unknown if that would break the api
   //
   
-  // Note: calling this function has the side-effect of updating mAllHolidays
+  // Note: calling this function has the side-effect of inserting the market
+  // holidays for the given year into mAllHolidays
   void setYear(unsigned short year);
 
   void setStartMonth(unsigned short month) { mStartMonth = month; }
@@ -50,13 +55,13 @@ private:
   // Inserts market holidays into mHolidays
   void addAllMarketHolidays();
 
-  // Fills mAllHolidays with the actual date of the holiday for the given year
+  // Calculates the actual dates for the given holidays based on the year
   void generateAllHolidaysForYear();
   
-  // Some holidays change year by year, so need to recalc 4 each year
+  // Container for market holidays regardless of year
   std::vector<boost::gregorian::year_based_generator*> mHolidays;
 
-  // Set for all market holidays this year
+  // Container for market holidays based on the current calendar year
   std::set<boost::gregorian::date> mAllHolidays;
 
   // Year in which to generate the holidays for

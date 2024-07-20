@@ -34,17 +34,16 @@ public:
   int getHttpCode() const { return mHttpCode; }
   int getCurlCode() const { return mCurlCode; }
 
-  // kptodo
-  // Loop from start month / start day to end month / end day
-  // void sendRangeOfRequests();
+  // Wrapper which calls sendRequest()
+  void sendRangeOfRequests();
 
-  // kptodo 4 tst
+  // Tells curl to send the request
+  void sendRequest(const std::string& url);
+  
+  // Get the CURL URLs from mCalendar
   void getUrls()
   { mCalendar.generateUrls(mUrlList, mEndpoint, mApiKey, mSymbol, mInterval); }
   
-  // Tells curl to send the request
-  void sendRequest();
-
   // Different ways to handle the response
   void parseJsonFile(SymbolContainer& container);
   void writeResponse2File(const std::string& filename);
@@ -71,8 +70,6 @@ private:
   std::string mApiKey;
   std::string mSymbol;
   std::string mInterval;
-  std::string mStartDate;
-  std::string mEndDate;
   int mPrecision;
 
   // Response codes
