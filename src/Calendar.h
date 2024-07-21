@@ -44,7 +44,8 @@ public:
 
 
   // Construct a list of urls for WebDataRetriever to loop over
-  void generateUrls(std::vector<std::string>& urlList,
+  void generateUrls(std::vector<std::pair<std::string,
+                    boost::gregorian::date>>& urlList,
                     const std::string& endpoint,
                     const std::string& key,
                     const std::string& symbol,

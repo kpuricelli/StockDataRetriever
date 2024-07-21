@@ -33,7 +33,7 @@ void Calendar::setYear(unsigned short year)
 
 //=============================================================================
 //=============================================================================
-void Calendar::generateUrls(std::vector<std::string>& urlList,
+void Calendar::generateUrls(std::vector<std::pair<std::string, date>>& urlList,
                             const std::string& endpoint,
                             const std::string& key,
                             const std::string& symbol,
@@ -85,16 +85,9 @@ void Calendar::generateUrls(std::vector<std::string>& urlList,
         + "&end_date=" + to_iso_extended_string(*ditr)
         + "%2015:30:00" + "&format=JSON";
 
-      urlList.emplace_back(url);
+      urlList.emplace_back(std::make_pair(url, (*ditr)));
     }
   }
-
-  // kptodo rm
-#if 0
-  std::cout << "Created " << urlList.size() << " urls" << std::endl;
-  for (const auto& i : urlList)
-    std::cout << i << std::endl;
-#endif
 }
 
 //=============================================================================

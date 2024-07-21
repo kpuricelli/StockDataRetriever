@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <chrono>
+#include <thread>
 
 //
 // kptodo / thoughts
@@ -20,7 +21,7 @@ namespace
   // Scope the resolution of the parser
   using json = nlohmann::json; 
 
-  // curl callback
+  // Curl callback when data is received
   std::size_t handleResponse(const char* in, std::size_t size,
                              std::size_t num, std::string* out)
   {
@@ -55,10 +56,10 @@ WebDataRetriever::~WebDataRetriever()
 }
 
 //=============================================================================
+// Setup the required curl options and callbacks
 //=============================================================================
 void WebDataRetriever::initInternal()
 {
-  // curl setup
   mCurlHandle = curl_easy_init();
   if (!mCurlHandle)
   {
@@ -66,27 +67,26 @@ void WebDataRetriever::initInternal()
     return;
   }
 
-  // kptodo reserve size (?)
   mResponsePtr = new std::string();
   if (!mResponsePtr)
   {
     std::cout << "Failed to create mResponsePtr" << std::endl;
     return;
   }
-  mResponsePtr->reserve(4096);
 
-  // Curl callbacks
-  
-  // Timeout: 10s
+  // One trading day's worth of data is around 50000 bytes
+  mResponsePtr->reserve(50000);
+
+  // Timeout at 10s
   curl_easy_setopt(mCurlHandle, CURLOPT_TIMEOUT, 10);
     
   // Follow redirects
   curl_easy_setopt(mCurlHandle, CURLOPT_FOLLOWLOCATION, 1L);
 
-  // Write data callback
+  // Set curl callback write function (handleResponse)
   curl_easy_setopt(mCurlHandle, CURLOPT_WRITEFUNCTION, handleResponse);
 
-  // Hook up data container (curl write data uses void*)
+  // Tell curl to write into mResponsePtr (curl technically writes as void*)
   curl_easy_setopt(mCurlHandle, CURLOPT_WRITEDATA, mResponsePtr);
 }
 
@@ -131,9 +131,9 @@ bool WebDataRetriever::isResponseOk()
 //=============================================================================
 void WebDataRetriever::sendRangeOfRequests()
 {
-  // kptodo sanity check the time span
+  // kptodo sanity check the time span (?)
 
-  // Get the URLs for the given time span
+  // Get the list of endpoint URLs to send as requests from the calendar
   getUrls();
 
   if (mUrlList.empty())
@@ -143,38 +143,74 @@ void WebDataRetriever::sendRangeOfRequests()
     return;
   }
 
+  // kptodo
+  // the free API plan i'm on has a limit of 8 requests per minute, so gotta
+  // slow ourselves down
+  int requestNumber = 0;
+  std::chrono::duration<double, std::milli> elapsedTime;
+  std::chrono::duration<double, std::milli> oneRequestTime;
+  std::chrono::duration oneMin = std::chrono::milliseconds(60000);
+
   // For each url
   for (const auto& url : mUrlList)
   {
-    // kptodo
-    // the free plan i'm on has a limit of 8 requests per minute
-
-    // Time at first url request
-    const auto start = std::chrono::high_resolution_clock::now();
+    // kptodo rm (?)
+    std::cout << url.first << std::endl;
     
-    sendRequest(url);
+    // Time now
+    const auto start = std::chrono::high_resolution_clock::now();
 
-    // Check the status of the request
+    // Send the request
+    sendRequest(url.first);
+
+    // Check the curl and http response codes
     if (!isResponseOk())
     {
-      // kptodo if not ok, do something about the time
-      std::cout << "!Response ok for url: "
-		<< url << std::endl;
-      std::cout << "Skipping to next url..." << std::endl;
+      // Update the time
+      // Time now
+      const auto end = std::chrono::high_resolution_clock::now();
+      oneRequestTime = end - start;
+      elapsedTime += oneRequestTime;
+      ++requestNumber;
+      
+      std::cout << "Warning: !isResponseOk() for url: "
+                << url.first << " skipping to next url..." << std::endl;
+      
       continue;
     }
 
+    // Create a filename in the form of symbol_interval_year_month_day.json
     std::string filename;
-    getFileName(filename);
+    filename.reserve(64);
+    getFileName(filename, url.second);
+
+    // Write the response
     writeResponse2File(filename);
 
-    // Elapsed time between when we hit the endpoint and now
-    //using namespace std::chrono_literals;
+    // Time now
     const auto end = std::chrono::high_resolution_clock::now();
-    const std::chrono::duration<double, std::milli> elapsed =
-      end - start;
-    
-    std::cout << "Request took: " << elapsed.count() << "ms" << std::endl;
+
+    // Update the time
+    oneRequestTime = end - start;
+    elapsedTime += oneRequestTime;
+    ++requestNumber;
+
+    // kptodo rm (?)
+    std::cout << "Request number " << requestNumber << " took "
+              << oneRequestTime.count() << "ms" << std::endl
+              << "Elapsed time " << elapsedTime.count() << "ms" << std::endl;
+
+    // If we sent 8 requests in under a minute, sleep until the next minute
+    if (requestNumber % 8 == 0)
+    {
+      std::cout << "8 requests took " << elapsedTime.count() << std::endl;
+      std::cout << mUrlList.size() - requestNumber
+                << " requests still in queue!" << std::endl;
+
+      auto time2sleep = oneMin - elapsedTime;
+      std::cout << "Sleeping for: " << time2sleep.count() << "ms" << std::endl;
+      std::this_thread::sleep_for(time2sleep);
+    }
   }
 }
 
@@ -194,10 +230,16 @@ void WebDataRetriever::sendRequest(const std::string& url)
     return;
   }
 
+  // Release the old data
+  mResponsePtr->clear();
+
+  // One trading day's worth of data is around 50000 bytes
+  mResponsePtr->reserve(50000);
+
   // Set the URL
   curl_easy_setopt(mCurlHandle, CURLOPT_URL, url.c_str());
 
-  // Send + curl response code
+  // Send request + grab curl response code
   mCurlCode = curl_easy_perform(mCurlHandle);
   
   // HTTP response code
@@ -270,7 +312,9 @@ void WebDataRetriever::writeResponse2File(const std::string& filename)
   mResponse.reserve(mResponsePtr->size());
   mResponse = *mResponsePtr;
 
-  std::ofstream inputFile(filename);
+  const static std::string path = "../json/";
+  
+  std::ofstream inputFile(path + filename);
   if (inputFile.is_open())
   {
     inputFile << mResponse;
@@ -284,10 +328,9 @@ void WebDataRetriever::writeResponse2File(const std::string& filename)
 
 //=============================================================================
 //=============================================================================
-void WebDataRetriever::getFileName(std::string& filename)
+void WebDataRetriever::getFileName(std::string& filename,
+                                   const boost::gregorian::date& date)
 {
-  // kptodo much data can one file hold?
-  // kptodo move to a diff directory
-  filename = mSymbol + "_" + mCalendar.getYear() + "_" + mCalendar.getMonth()
-    + "_" + mCalendar.getDay() + ".json";
+  filename = mSymbol + "-" + mInterval + "-" + to_iso_extended_string(date)
+    + ".json";
 }

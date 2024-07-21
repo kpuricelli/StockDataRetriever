@@ -30,38 +30,44 @@ public:
   void setStartDay(unsigned short day) { mCalendar.setStartDay(day); }
   void setEndDay(unsigned short day) { mCalendar.setEndDay(day); }
   
-  // Status codes
-  int getHttpCode() const { return mHttpCode; }
-  int getCurlCode() const { return mCurlCode; }
-
-  // Wrapper which calls sendRequest()
+  // Public wrapper which calls sendRequest() over the set time span
   void sendRangeOfRequests();
-
-  // Tells curl to send the request
-  void sendRequest(const std::string& url);
   
+private:
+
   // Get the CURL URLs from mCalendar
   void getUrls()
   { mCalendar.generateUrls(mUrlList, mEndpoint, mApiKey, mSymbol, mInterval); }
-  
-  // Different ways to handle the response
-  void parseJsonFile(SymbolContainer& container);
-  void writeResponse2File(const std::string& filename);
-  void getFileName(std::string& filename);
-  
-private:
-  
+
+  // Prepare internal members / setup curl options
   void initInternal();
+
+  // Assert status of the response from the API
   bool isResponseOk();
 
+  // Send a single http request
+  void sendRequest(const std::string& url);
+
+  // kptodo
+  // Read local json files
+  void parseJsonFile(SymbolContainer& container);
+
+  // Write the returned data to a local file
+  void writeResponse2File(const std::string& filename);
+
+  // Create filename of the form: symbol-interval-year-month-day.json
+  void getFileName(std::string& filename, const boost::gregorian::date& date);
+
   // URL container
-  std::vector<std::string> mUrlList;
+  std::vector<std::pair<std::string, boost::gregorian::date>> mUrlList;
 
   // Calendar object to help pull data from over a time span
   Calendar mCalendar;
-  
+
+  // Handle for curl configuration
   CURL* mCurlHandle;
 
+  // Curl writes to mResponsePtr as void*
   std::string* mResponsePtr;
   std::string mResponse;
 

@@ -29,12 +29,12 @@ int main(/*int argc, char* argv[]*/)
   w.setSymbol("AAPL");
   w.setInterval("1min");
 
-  // calendar stuff
+  // Calendar stuff
   w.setYear(2023);
   w.setStartMonth(12);
   w.setEndMonth(12);
   w.setStartDay(1);
-  w.setEndDay(1);
+  //w.setEndDay(15);
   w.sendRangeOfRequests();
   //w.getUrls();
   //std::string filename;
