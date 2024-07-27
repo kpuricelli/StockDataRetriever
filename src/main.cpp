@@ -23,10 +23,10 @@ int main(/*int argc, char* argv[]*/)
 
   // Calendar stuff
   w.setYear(2023);
-  w.setStartMonth(12);
+  w.setStartMonth(1);
   w.setEndMonth(12);
   w.setStartDay(1);
-  w.setEndDay(15);
+  //w.setEndDay(15);
   w.sendRangeOfRequests();
   //w.getUrls();
   //std::string filename;

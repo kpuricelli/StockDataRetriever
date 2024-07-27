@@ -43,6 +43,7 @@ void Calendar::setYear(unsigned short year)
     return;
   
   mYear = year;
+  addAllMarketHolidays(); 
   generateAllHolidaysForYear();
 }
 

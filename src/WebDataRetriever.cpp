@@ -143,8 +143,11 @@ void WebDataRetriever::sendRangeOfRequests()
     return;
   }
 
-  // kptodo
-  // the free API plan i'm on has a limit of 8 requests per minute, so gotta
+  // kptodo rm (?)
+  std::cout << "WebDataRetriever::sendRangeOfRequests(): "
+            << mUrlList.size() << " requests to process" << std::endl;
+
+  // The free API plan i'm on has a limit of 8 requests per minute, so gotta
   // slow ourselves down
   int requestNumber = 0;
   std::chrono::duration<double, std::milli> elapsedTime;
