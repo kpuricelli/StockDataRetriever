@@ -7,51 +7,210 @@
 //=============================================================================
 #define CATCH_CONFIG_MAIN
 #include "catch_amalgamated.hpp"
-
-// kptodo structure (?)
-#include "../src/WebDataRetriever.h"
-#include "../src/SymbolContainer.h"
-#include <iostream>
-
+#include "../src/Calendar.h"
 
 //=============================================================================
+// Test case: Calendar default constructor
 //=============================================================================
-SCENARIO("Insert into SymbolContainer")
+TEST_CASE("Calendar", "[GetFixedMarketHolidays]")
 {
-  GIVEN("An empty SymbolContainer")
+  Calendar calendar;
+
+  // Validate the assumption that the Calendar constructor default initalizes
+  // it's internal dates to 0
+  REQUIRE(!calendar.isYearSet());
+  REQUIRE(!calendar.isStartMonthSet());
+  REQUIRE(!calendar.isEndMonthSet());
+  REQUIRE(!calendar.isStartDaySet());
+  REQUIRE(!calendar.isEndDaySet());
+
+  //===========================================================================
+  // Section: fixed market holidays
+  // kptodo: this does not include good friday...
+  //===========================================================================
+  SECTION("Calendar should insert 0 market holidays with no provided year")
   {
-    WebDataRetriever w;
-    SymbolContainer symbolContainer;
-
-    // Validate assumption of the GIVEN clause
-    THEN("The container is empty")
-    {
-      REQUIRE(symbolContainer.getSymbols().size() == 0);
-    }
-  
-    // Randomly selected a small data set (7 timestamps)
-    WHEN("The container inserts a new key")
-    {
-      w.setEndpoint("http://api.twelvedata.com");
-      w.setSymbol("AAPL");
-      w.setInterval("1h");
-      w.setStartDate("2022-02-01%2009:30:00");
-      w.setEndDate("2022-02-01%2015:30:00");
-      w.sendRequest();
-      //w.parseResponse(symbolContainer);
-
-      THEN("1 key added to container")
-      {
-        REQUIRE(symbolContainer.getSymbols().size() == 1);
-      
-        AND_THEN("The key is mapped to 7 values")
-        {
-          const auto AAPLIter = symbolContainer.getSymbols().find("AAPL");
-          const int numAAPLTimestamps =
-            static_cast<int>(AAPLIter->second.size());
-          REQUIRE(numAAPLTimestamps == 7);
-        }
-      }
-    }
+    REQUIRE(calendar.getNumberOfFixedMarketHolidays() == 0);
   }
 }
+
+//=============================================================================
+// Test case: Calendar generates correct holidays for given year: 2023
+//=============================================================================
+TEST_CASE("Calendar", "[GetMarketHolidaysForYear:2023]")
+{
+  using namespace boost::gregorian;
+  
+  // Year: 2023
+  const unsigned short year = 2023;
+
+  // Start month: 12
+  const unsigned short startMonth = 12;
+
+  // End month: 12
+  const unsigned short endMonth = 12;
+
+  // Start day: 1
+  const unsigned short startDay = 1;
+
+  // End day: 1
+  const unsigned short endDay = 1;
+
+  Calendar calendar(year, startMonth, endMonth, startDay, endDay);
+
+  // Validate the assumption that the Calendar constructor initalizes its
+  // internal dates to be non-default constructed
+  REQUIRE(calendar.isYearSet());
+  REQUIRE(calendar.isStartMonthSet());
+  REQUIRE(calendar.isEndMonthSet());
+  REQUIRE(calendar.isStartDaySet());
+  REQUIRE(calendar.isEndDaySet());
+
+  // Validate the assumption that the Calendar constructor set the correct
+  // dates given to the constructor
+  REQUIRE(calendar.getYear() == year);
+  REQUIRE(calendar.getStartMonth() == startMonth);
+  REQUIRE(calendar.getEndMonth() == endMonth);
+  REQUIRE(calendar.getStartDay() == startDay);
+  REQUIRE(calendar.getEndDay() == endDay);
+  
+  //===========================================================================
+  // Section: Check the holiday dates based on a given year
+  //===========================================================================
+  SECTION("Calendar should provide market holiday dates for given year: 2023")
+  {
+    // kptodo
+    // missing: Good Friday
+    const auto& marketHolidaysForYear = calendar.getMarketHolidaysForYear();
+
+    // Market holidays for the year 2023:
+    
+    // 2023-01-02 (New Year's Day) (observed)
+    const date newYearsDay = from_string("2023-01-02");
+    // 2023-01-16 (MLK Day)
+    const date mlkDay = from_string("2023-01-16");
+    // 2023-02-20 (President's Day)
+    const date presidentsDay = from_string("2023-02-20");
+    // 2023-05-29 (Memorial Day)
+    const date memorialDay = from_string("2023-05-29");
+    // 2023-06-19 (Juneteenth)
+    const date juneteenth = from_string("2023-06-19");
+    // 2023-07-04 (US Independence Day)
+    const date usIndependenceDay = from_string("2023-07-04");
+    // 2023-09-04 (Labor Day)
+    const date laborDay = from_string("2023-09-04");
+    // 2023-11-23 (Thanksgiving Day)
+    const date thanksgivingDay = from_string("2023-11-23");
+    // 2023-12-25 (Christmas Day)
+    const date christmasDay = from_string("2023-12-25");
+    
+    // Assert the market holidays for the given year
+    REQUIRE(marketHolidaysForYear.contains(newYearsDay));
+    REQUIRE(marketHolidaysForYear.contains(mlkDay));
+    REQUIRE(marketHolidaysForYear.contains(presidentsDay));
+    REQUIRE(marketHolidaysForYear.contains(memorialDay));
+    REQUIRE(marketHolidaysForYear.contains(juneteenth));
+    REQUIRE(marketHolidaysForYear.contains(usIndependenceDay));
+    REQUIRE(marketHolidaysForYear.contains(laborDay));
+    REQUIRE(marketHolidaysForYear.contains(thanksgivingDay));
+    REQUIRE(marketHolidaysForYear.contains(christmasDay));
+  }
+}
+
+//=============================================================================
+// Test case: Calendar generates correct holidays for given year: 2020
+// Note: 2020 was chosen because there are only 4 mondays in May
+//       (checking Memorial Day), and
+//       4 July falls on a Saturday, so observed day is 3 July
+//=============================================================================
+TEST_CASE("Calendar", "[GetMarketHolidaysForYear:2020]")
+{
+  using namespace boost::gregorian;
+  
+  // Year: 2020
+  const unsigned short year = 2020;
+
+  // Start month: 12
+  const unsigned short startMonth = 12;
+
+  // End month: 12
+  const unsigned short endMonth = 12;
+
+  // Start day: 1
+  const unsigned short startDay = 1;
+
+  // End day: 1
+  const unsigned short endDay = 1;
+
+  Calendar calendar(year, startMonth, endMonth, startDay, endDay);
+
+  // Validate the assumption that the Calendar constructor initalizes its
+  // internal dates to be non-default constructed
+  REQUIRE(calendar.isYearSet());
+  REQUIRE(calendar.isStartMonthSet());
+  REQUIRE(calendar.isEndMonthSet());
+  REQUIRE(calendar.isStartDaySet());
+  REQUIRE(calendar.isEndDaySet());
+
+  // Validate the assumption that the Calendar constructor set the correct
+  // dates given to the constructor
+  REQUIRE(calendar.getYear() == year);
+  REQUIRE(calendar.getStartMonth() == startMonth);
+  REQUIRE(calendar.getEndMonth() == endMonth);
+  REQUIRE(calendar.getStartDay() == startDay);
+  REQUIRE(calendar.getEndDay() == endDay);
+  
+  //===========================================================================
+  // Section: Check the holiday dates based on a given year
+  //===========================================================================
+  SECTION("Calendar should provide market holiday dates for year: 2020")
+  {
+    // kptodo
+    // missing: Good Friday
+    const auto& marketHolidaysForYear = calendar.getMarketHolidaysForYear();
+
+    // Market holidays for the year 2020:
+    
+    // 2020-01-01 (New Year's Day)
+    const date newYearsDay = from_string("2020-01-01");
+    // 2020-01-20 (MLK Day)
+    const date mlkDay = from_string("2020-01-20");
+    // 2020-02-17 (President's Day)
+    const date presidentsDay = from_string("2020-02-17");
+    // 2020-05-25 (Memorial Day)
+    const date memorialDay = from_string("2020-05-25");
+    // 2020-07-03 (US Independence Day) (observed)
+    const date usIndependenceDay = from_string("2020-07-03");
+    // 2020-09-07 (Labor Day)
+    const date laborDay = from_string("2020-09-07");
+    // 2020-11-26 (Thanksgiving Day)
+    const date thanksgivingDay = from_string("2020-11-26");
+    // 2020-12-25 (Christmas Day)
+    const date christmasDay = from_string("2020-12-25");
+    
+    // Assert the market holidays for the given year
+    REQUIRE(marketHolidaysForYear.contains(newYearsDay));
+    REQUIRE(marketHolidaysForYear.contains(mlkDay));
+    REQUIRE(marketHolidaysForYear.contains(presidentsDay));
+    REQUIRE(marketHolidaysForYear.contains(memorialDay));
+    REQUIRE(marketHolidaysForYear.contains(usIndependenceDay));
+    REQUIRE(marketHolidaysForYear.contains(laborDay));
+    REQUIRE(marketHolidaysForYear.contains(thanksgivingDay));
+    REQUIRE(marketHolidaysForYear.contains(christmasDay));    
+  }
+}
+
+// kptodo
+// Note: this has been randomly tested with the files in referenceJson/
+//       would be nice to test a larger dataset though
+//=============================================================================
+// Test case: Compare programatically downloaded json to ones saved off the
+//            API website itself
+//=============================================================================
+// TEST_CASE("WebDataRetriever", "[CompareJsonToReference]")
+
+// kptodo
+//=============================================================================
+// Test case: Ensure we don't send more requests / min than 8 (API time limit)
+//=============================================================================
+// TEST_CASE("WebDataRetriever", "[SendRangeOfRequests]")

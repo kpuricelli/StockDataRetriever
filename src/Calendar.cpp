@@ -10,10 +10,21 @@ namespace
 
 //=============================================================================
 //=============================================================================
-Calendar::Calendar(unsigned short year, unsigned short endDay)
-  : mYear(year), mEndDay(endDay)
+Calendar::Calendar(unsigned short year,
+                   unsigned short startMonth, unsigned short endMonth,
+                   unsigned short startDay, unsigned short endDay)
+  : mYear(year), mStartMonth(startMonth), mEndMonth(endMonth),
+    mStartDay(startDay), mEndDay(endDay)
 {
-  addAllMarketHolidays();
+  // kptodo better range checking on year?
+  // If year was set, generate the market holidays for this year
+  if (mYear > 0)
+  {
+    // On first thought these holidays happen every year, but that's not true:
+    // ex: Juneteenth wasn't an official holiday until 2021
+    addAllMarketHolidays();    
+    generateAllHolidaysForYear();
+  }
 }
 
 //=============================================================================
@@ -27,6 +38,10 @@ Calendar::~Calendar()
 //=============================================================================
 void Calendar::setYear(unsigned short year)
 {
+  // If setting the same year, don't do anything
+  if (mYear == year)
+    return;
+  
   mYear = year;
   generateAllHolidaysForYear();
 }
@@ -69,7 +84,7 @@ void Calendar::generateUrls(std::vector<std::pair<std::string, date>>& urlList,
       }
 
       // Skip all holidays
-      if (mAllHolidays.contains(*ditr))
+      if (mMarketHolidaysForYear.contains(*ditr))
       {
 	// kptodo rm cout
 	std::cout << "Skipping market holiday on date: "
@@ -108,18 +123,56 @@ void Calendar::addAllMarketHolidays()
   //
   // Fixed holidays
   //
-  
-  // Western NY
-  mHolidays.push_back(new partial_date(1, Jan));
 
-  // Juneteenth
-  mHolidays.push_back(new partial_date(19, Jun));
+  // For Western NY, if the first falls on a Sunday, market is closed the
+  // following Monday, if it falls on Saturday, no closure
+  {
+    date tmpDate = from_string(std::to_string(mYear) + "-01-01");
+    if (tmpDate.day_of_week() == Sunday)
+      mHolidays.push_back(new partial_date(2, Jan));
+    else
+      mHolidays.push_back(new partial_date(1, Jan));
+  }
+  
+  // Juneteenth: officially became a federal holiday in 2022
+  // If it falls on a Saturday, observed the day prior. If it's on a Sunday,
+  // the next weekday
+  if (mYear >= 2022)
+  {
+    date tmpDate = from_string(std::to_string(mYear) + "-06-19");
+    if (tmpDate.day_of_week() == Saturday)
+      mHolidays.push_back(new partial_date(18, Jun));
+    else if (tmpDate.day_of_week() == Sunday)
+      mHolidays.push_back(new partial_date(20, Jun));
+    else
+      mHolidays.push_back(new partial_date(19, Jun));      
+  }
 
   // US Independence Day
-  mHolidays.push_back(new partial_date(4, Jul));
-
+  // If it falls on a Saturday, observed the day prior. If it's on a Sunday,
+  // the next weekday
+  {
+    date tmpDate = from_string(std::to_string(mYear) + "-07-04");
+    if (tmpDate.day_of_week() == Saturday)
+      mHolidays.push_back(new partial_date(3, Jul));
+    else if (tmpDate.day_of_week() == Sunday)
+      mHolidays.push_back(new partial_date(5, Jul));
+    else
+      mHolidays.push_back(new partial_date(4, Jul));      
+   }
+  
   // Christmas Day
-  mHolidays.push_back(new partial_date(25, Dec));
+  // If it falls on a Saturday, observed the day prior. If it's on a Sunday,
+  // the next weekday
+  {
+    date tmpDate = from_string(std::to_string(mYear) + "-12-25");
+    if (tmpDate.day_of_week() == Saturday)
+      mHolidays.push_back(new partial_date(24, Dec));
+    else if (tmpDate.day_of_week() == Sunday)
+      mHolidays.push_back(new partial_date(26, Dec));
+    else
+      mHolidays.push_back(new partial_date(25, Dec));
+   }
 
   //
   // Rotating holidays
@@ -136,8 +189,8 @@ void Calendar::addAllMarketHolidays()
 
   // kptodo good friday
 
-  // Memorial Day
-  mHolidays.push_back(new nth_dow(nth_dow::fourth, Monday, May));
+  // Memorial Day: using 'fifth' defaults to 'last monday in month' :)
+  mHolidays.push_back(new nth_dow(nth_dow::fifth, Monday, May));
 
   // US Labor Day
   mHolidays.push_back(new nth_dow(nth_dow::first, Monday, Sep));
@@ -160,16 +213,6 @@ void Calendar::generateAllHolidaysForYear()
   for (std::vector<year_based_generator*>::iterator it = mHolidays.begin();
       it != mHolidays.end(); ++it)
   {
-    mAllHolidays.insert((*it)->get_date(mYear));
+    mMarketHolidaysForYear.insert((*it)->get_date(mYear));
   }
-
-  // kptodo rm
-#if 0
-  for (std::set<date>::iterator it = mAllHolidays.begin();
-       it != mAllHolidays.end(); ++it)
-    std::cout << to_iso_extended_string(*it) << std::endl;
-    
-  std::cout << "Number o Holidays: " << mAllHolidays.size() << std::endl;
-#endif
 }
-

@@ -4,22 +4,14 @@
 
 #include "WebDataRetriever.h"
 #include "SymbolContainer.h"
-//#include "Calendar.h"
 #include <iostream>
 #include <set>
-
-// kptodo rip this out into a more formal testing structure
-//static constexpr int debugPrintTimestamps = 0;
-//static constexpr unsigned long numExpectedTimestamps = 7;
-//static constexpr int numExpectedTimestamps2 = 10;
-//static constexpr int numExpectedQQQTimestamps = 7;
 
 //=============================================================================
 // Compiler complaining about unused function params
 //=============================================================================
 int main(/*int argc, char* argv[]*/)
 {
-  
   WebDataRetriever w;
   SymbolContainer symbols;
   
@@ -34,7 +26,7 @@ int main(/*int argc, char* argv[]*/)
   w.setStartMonth(12);
   w.setEndMonth(12);
   w.setStartDay(1);
-  //w.setEndDay(15);
+  w.setEndDay(15);
   w.sendRangeOfRequests();
   //w.getUrls();
   //std::string filename;
