@@ -79,17 +79,20 @@ void Calendar::generateUrls(std::vector<std::pair<std::string, date>>& urlList,
       // Skip all weekends
       if ((*ditr).day_of_week() == Saturday || (*ditr).day_of_week() == Sunday)
       {
+#if DEBUG
 	std::cout << "Skipping weekend on date: "
 		  << to_iso_extended_string(*ditr) << std::endl;
+#endif
 	continue;
       }
 
       // Skip all holidays
       if (mMarketHolidaysForYear.contains(*ditr))
       {
-	// kptodo rm cout
+#if DEBUG
 	std::cout << "Skipping market holiday on date: "
 		  << to_iso_extended_string(*ditr) << std::endl;
+#endif
 	continue;
       }
 
@@ -212,8 +215,6 @@ void Calendar::generateAllHolidaysForYear()
   }
       
   for (std::vector<year_based_generator*>::iterator it = mHolidays.begin();
-      it != mHolidays.end(); ++it)
-  {
+       it != mHolidays.end(); ++it)
     mMarketHolidaysForYear.insert((*it)->get_date(mYear));
-  }
 }

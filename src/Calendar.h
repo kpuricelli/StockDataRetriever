@@ -6,13 +6,7 @@
 
 #include <vector>
 #include <set>
-
-// kptodo
-// change to gregorian_types.hpp (?)
-// The below includes all types plus i/o
 #include <boost/date_time/gregorian/gregorian.hpp>
-// No i/o just types:
-// #include "boost/date_time/gregorian/gregorian_types.hpp"
 
 class Calendar
 {
