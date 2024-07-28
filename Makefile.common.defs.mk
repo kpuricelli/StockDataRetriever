@@ -24,7 +24,7 @@ TEST_BIN_DIR := $(TEST_ROOT)/bin/$(OBJ_DIR)
 #==============================================================================
 CXX := g++ -std=c++20
 OptFlags := -O2
-DebugFlags := -g
+DebugFlags := -g -DDEBUG
 
 # Add the opt / debug flags if desired
 ifeq ($(STX_OPTIMIZE),none)

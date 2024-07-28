@@ -1,6 +1,8 @@
 #==============================================================================
 # Makefile to build the src executable
 #==============================================================================
+
+# Include the common makefile so we get $(CXX), $(LDLIBS), etc
 include ../Makefile.common.defs.mk
 
 # Executable name

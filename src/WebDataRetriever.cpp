@@ -1,18 +1,12 @@
 #include "WebDataRetriever.h"
 #include "StockTimeSeriesData.h"
 #include "Json.hpp"
+#include "boost/date_time/posix_time/posix_time.hpp"
 #include <map>
 #include <iostream>
 #include <fstream>
 #include <chrono>
 #include <thread>
-
-//
-// kptodo / thoughts
-// Using a larger dataset, examine the performance tradeoffs of doing a
-// new/delete on mResponsePtr between each api call (current implementation),
-// and once per creation / destruction of this object. see other 'kptodo-s'
-//
 
 //=============================================================================
 //=============================================================================
@@ -74,7 +68,7 @@ void WebDataRetriever::initInternal()
     return;
   }
 
-  // One trading day's worth of data is around 50000 bytes
+  // One trading day's worth of data @1min intervals is ~50000 bytes
   mResponsePtr->reserve(50000);
 
   // Timeout at 10s
@@ -116,8 +110,6 @@ bool WebDataRetriever::isResponseOk()
     noError = false;
   }
 
-  // kptodo is this a necessary check?
-  // Size of the response is zero, but with no errors
   if (mResponsePtr && mResponsePtr->size() == 0)
   {
     std::cout << "mResponsePtr->size() is zero" << std::endl;
@@ -128,6 +120,13 @@ bool WebDataRetriever::isResponseOk()
 }
 
 //=============================================================================
+// kpnote
+// There's some odd looking stuff happening in this function, for
+// the following reasons: the API key i'm using is the free one. So we can
+// send a maximum of 8 requests to the API endpoint per minute ("per minute"
+// here means wall clock time, not time since first request)
+// Ex: request 1: 10:44:58 (7 credits remaining)
+// Ex: request 2: 10:45:00 (7 credits remaining)
 //=============================================================================
 void WebDataRetriever::sendRangeOfRequests()
 {
@@ -144,24 +143,38 @@ void WebDataRetriever::sendRangeOfRequests()
   }
 
   // kptodo rm (?)
+  // General info about total number of requests we have in our list to send
   std::cout << "WebDataRetriever::sendRangeOfRequests(): "
             << mUrlList.size() << " requests to process" << std::endl;
 
-  // The free API plan i'm on has a limit of 8 requests per minute, so gotta
-  // slow ourselves down
+  // Variables to track state
   int requestNumber = 0;
-  std::chrono::duration<double, std::milli> elapsedTime;
-  std::chrono::duration<double, std::milli> oneRequestTime;
-  std::chrono::duration oneMin = std::chrono::milliseconds(60000);
+  int requestsThisMinute = 0;
+  boost::posix_time::time_duration time4OneRequest;
+  boost::posix_time::time_duration time4EightRequests;
+  boost::posix_time::time_duration totalTime;
 
-  // For each url
+  // Start time
+  auto startTime = boost::posix_time::second_clock::local_time();
+
+  // Convert to struct tm to grab just the seconds part
+  auto startTimeAsTm = boost::posix_time::to_tm(startTime);
+
+  // Create a time limit for the next 8 requests, which is 1 minute - the
+  // number of seconds at the start time
+  auto timeLimit = boost::posix_time::minutes(1) -
+    boost::posix_time::seconds(startTimeAsTm.tm_sec);
+
+  // Create a buffer of 5 seconds to compare the time limit against the
+  // total time with
+  const auto timeBuffer = boost::posix_time::seconds(3);
+  const auto timeBufferAsChrono = std::chrono::seconds(3);
+
+  // For each request
   for (const auto& url : mUrlList)
   {
-    // kptodo rm (?)
-    std::cout << url.first << std::endl;
-    
-    // Time now
-    const auto start = std::chrono::high_resolution_clock::now();
+    // Time as of sending the request
+    startTime = boost::posix_time::second_clock::local_time();
 
     // Send the request
     sendRequest(url.first);
@@ -169,19 +182,13 @@ void WebDataRetriever::sendRangeOfRequests()
     // Check the curl and http response codes
     if (!isResponseOk())
     {
-      // Update the time
-      // Time now
-      const auto end = std::chrono::high_resolution_clock::now();
-      oneRequestTime = end - start;
-      elapsedTime += oneRequestTime;
-      ++requestNumber;
-      
-      std::cout << "Warning: !isResponseOk() for url: "
-                << url.first << " skipping to next url..." << std::endl;
-      
+      std::cout << "Warning: !isResponseOk()" << std::endl;
+      std::cout << "Overall request number: " << requestNumber << std::endl;
+      std::cout << "Request this minute: " << requestsThisMinute << std::endl;
+      std::cout << "URL: " << url.first << std::endl;
       continue;
     }
-
+    
     // Create a filename in the form of symbol_interval_year_month_day.json
     std::string filename;
     filename.reserve(64);
@@ -190,30 +197,105 @@ void WebDataRetriever::sendRangeOfRequests()
     // Write the response
     writeResponse2File(filename);
 
-    // Time now
-    const auto end = std::chrono::high_resolution_clock::now();
-
-    // Update the time
-    oneRequestTime = end - start;
-    elapsedTime += oneRequestTime;
+    // Update internal state
+    auto endTime = boost::posix_time::second_clock::local_time();
+    time4OneRequest = endTime - startTime;
+    time4EightRequests += time4OneRequest;
+    totalTime += time4OneRequest;
     ++requestNumber;
+    ++requestsThisMinute;
 
-    // kptodo rm (?)
-    std::cout << "Request number " << requestNumber << " took "
-              << oneRequestTime.count() << "ms" << std::endl
-              << "Elapsed time " << elapsedTime.count() << "ms" << std::endl;
-
-    // If we sent 8 requests in under a minute, sleep until the next minute
-    if (requestNumber % 8 == 0)
+    //
+    // Two cases we need to consider:
+    //
+    // 1.) We've hit the time limit before sending 8 requests for the
+    //     current minute => reset the time limit and requestsThisMinute
+    if (timeLimit.total_seconds() <=
+        (time4EightRequests.total_seconds() + timeBuffer.total_seconds()))
     {
-      std::cout << "8 requests took " << elapsedTime.count() << std::endl;
-      std::cout << mUrlList.size() - requestNumber
-                << " requests still in queue!" << std::endl;
+      // kptodo rm (?)
+#if DEBUG
+      std::cout << "Time limit reached!" << std::endl;
+      std::cout << "Sent " << requestsThisMinute << " requests this minute"
+                << std::endl;
+#endif
+      
+      // Reset how many requests we've sent this minute + time taken
+      requestsThisMinute = 0;
+      time4EightRequests = boost::posix_time::seconds(0);
 
-      auto time2sleep = oneMin - elapsedTime;
-      std::cout << "Sleeping for: " << time2sleep.count() << "ms" << std::endl;
-      std::this_thread::sleep_for(time2sleep);
+      // Sleep for bufferTime to ensure we cross a new minute boundary
+#if DEBUG
+      std::cout << "Sleeping for: " << timeBuffer.total_seconds() << "s"
+                << std::endl;
+#endif
+      
+      std::this_thread::sleep_for(timeBufferAsChrono);
+
+      // Reset the start time
+      startTime = boost::posix_time::second_clock::local_time();
+
+      // Convert to struct tm to grab just the seconds part
+      startTimeAsTm = boost::posix_time::to_tm(startTime);
+
+      // Create a time limit for the next 8 requests, which is 1 minute - the
+      // number of seconds at the start time
+      timeLimit = boost::posix_time::minutes(1) -
+        boost::posix_time::seconds(startTimeAsTm.tm_sec);
     }
+
+    //
+    // 2.) We've sent 8 requests before the time limit has been reached,
+    //     in which case we need to wait until the next minute before sending
+    //     the next request
+    else if ((requestsThisMinute % 8) == 0)
+    {
+      // kptodo rm (?)
+#if DEBUG
+      std::cout << "Request limit reached!" << std::endl;
+      std::cout << "Sent " << requestsThisMinute << " requests this minute"
+                << std::endl;
+#endif
+      
+      // Reset how many requests we've sent this minute + time taken
+      requestsThisMinute = 0;
+      time4EightRequests = boost::posix_time::seconds(0);
+
+      // Figure out how long we need to sleep for
+      // Convert to struct tm to grab just the seconds part
+      auto endTimeAsTm = boost::posix_time::to_tm(endTime);
+
+      // Need to wait until the next wall clock minute => 1 minute - seconds it
+      // took to fill 8 requests
+      const auto time2wait =
+        std::chrono::minutes(1) - std::chrono::seconds(endTimeAsTm.tm_sec);
+
+      // kptodo rm (?)
+#if DEBUG
+      std::cout << time2wait.count() << "s until next minute. Calling "
+        "std::this_thread_sleep_for(" << time2wait.count() << ")" << std::endl;
+#endif
+      
+      std::this_thread::sleep_for(time2wait);
+
+      // Now that we've awoken, recalculate the time limit
+      endTime = boost::posix_time::second_clock::local_time();
+
+      // Figure out how long we need to sleep for
+      // Convert to struct tm to grab just the seconds part
+      endTimeAsTm = boost::posix_time::to_tm(endTime);
+
+      // Create a time limit for the next 8 requests, which is 1 minute - the
+      // number of seconds at the start time
+      timeLimit = boost::posix_time::minutes(1) -
+        boost::posix_time::seconds(endTimeAsTm.tm_sec);
+    }
+
+    // Print out some stats / progress
+    std::cout << "Request number " << requestNumber << " took "
+              << time4OneRequest.total_seconds() << "s; total time: "
+              << totalTime.total_seconds() << "s; requests still in list: "
+              << mUrlList.size() - requestNumber << std::endl;
   }
 }
 
@@ -229,6 +311,7 @@ void WebDataRetriever::sendRequest(const std::string& url)
     if (!mCurlHandle)
       std::cout << "WebDataRetriever::sendRequest(): !mCurlHandle"
 		<< std::endl;
+    
     std::cout << "Returning...\n" << std::endl;
     return;
   }
