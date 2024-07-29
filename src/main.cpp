@@ -22,11 +22,12 @@ int main(/*int argc, char* argv[]*/)
   w.setInterval("1min");
 
   // Calendar stuff
-  w.setYear(2023);
+  w.setStartYear(2021);
+  w.setEndYear(2022);
   w.setStartMonth(1);
   w.setEndMonth(12);
   w.setStartDay(1);
-  //w.setEndDay(15);
+  //w.setEndDay(29);
   w.sendRangeOfRequests();
   //w.getUrls();
   //std::string filename;

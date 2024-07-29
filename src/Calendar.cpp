@@ -10,21 +10,13 @@ namespace
 
 //=============================================================================
 //=============================================================================
-Calendar::Calendar(unsigned short year,
+Calendar::Calendar(unsigned short startYear, unsigned short endYear,
                    unsigned short startMonth, unsigned short endMonth,
                    unsigned short startDay, unsigned short endDay)
-  : mYear(year), mStartMonth(startMonth), mEndMonth(endMonth),
+  : mStartYear(startYear), mEndYear(endYear),
+    mStartMonth(startMonth), mEndMonth(endMonth),
     mStartDay(startDay), mEndDay(endDay)
 {
-  // kptodo better range checking on year?
-  // If year was set, generate the market holidays for this year
-  if (mYear > 0)
-  {
-    // On first thought these holidays happen every year, but that's not true:
-    // ex: Juneteenth wasn't an official holiday until 2021
-    addAllMarketHolidays();    
-    generateAllHolidaysForYear();
-  }
 }
 
 //=============================================================================
@@ -32,19 +24,6 @@ Calendar::Calendar(unsigned short year,
 Calendar::~Calendar()
 {
   // kptodo delete the partial_dates in mHolidays
-}
-
-//=============================================================================
-//=============================================================================
-void Calendar::setYear(unsigned short year)
-{
-  // If setting the same year, don't do anything
-  if (mYear == year)
-    return;
-  
-  mYear = year;
-  addAllMarketHolidays(); 
-  generateAllHolidaysForYear();
 }
 
 //=============================================================================
@@ -60,58 +39,67 @@ void Calendar::generateUrls(std::vector<std::pair<std::string, date>>& urlList,
   // For testing: specify the start / end month
   // For gathering all data, want to do all months
   //
-  
-  // For each month
-  for (unsigned short month = mStartMonth; month <= mEndMonth; ++month)
+
+  // For each year
+  for (unsigned short year = mStartYear; year <= mEndYear; ++year)
   {
-    // If mEndDay == 0, create a url for each day in the month,
-    // otherwise, use the given end day
-    auto eom_day = gregorian_calendar::end_of_month_day(mYear, month);
-
-    date endOfMonth = (mEndDay == 0) ?
-      boost::gregorian::date(mYear, month, eom_day) :
-      boost::gregorian::date(mYear, month, mEndDay);
+    // Update the holidays with the current year's dates
+    addAllMarketHolidays(year);    
+    generateAllHolidaysForYear(year);
     
-    // For each day
-    day_iterator ditr(date(mYear, month, mStartDay));
-    for (; ditr <= endOfMonth; ++ditr)
+    // For each month
+    for (unsigned short month = mStartMonth; month <= mEndMonth; ++month)
     {
-      // Skip all weekends
-      if ((*ditr).day_of_week() == Saturday || (*ditr).day_of_week() == Sunday)
+      // If mEndDay == 0, create a url for each day in the month,
+      // otherwise, use the given end day
+      auto eom_day = gregorian_calendar::end_of_month_day(year, month);
+
+      date endOfMonth = (mEndDay == 0) ?
+        boost::gregorian::date(year, month, eom_day) :
+        boost::gregorian::date(year, month, mEndDay);
+    
+      // For each day
+      day_iterator ditr(date(year, month, mStartDay));
+      for (; ditr <= endOfMonth; ++ditr)
       {
+        // Skip all weekends
+        if ((*ditr).day_of_week() == Saturday || (*ditr).day_of_week() == Sunday)
+        {
 #if DEBUG
-	std::cout << "Skipping weekend on date: "
-		  << to_iso_extended_string(*ditr) << std::endl;
+          std::cout << "Skipping weekend on date: "
+                    << to_iso_extended_string(*ditr) << std::endl;
 #endif
-	continue;
-      }
+          continue;
+        }
 
-      // Skip all holidays
-      if (mMarketHolidaysForYear.contains(*ditr))
-      {
+        // Skip all holidays
+        if (mMarketHolidaysForYear.contains(*ditr))
+        {
 #if DEBUG
-	std::cout << "Skipping market holiday on date: "
-		  << to_iso_extended_string(*ditr) << std::endl;
+          std::cout << "Skipping market holiday on date: "
+                    << to_iso_extended_string(*ditr) << std::endl;
 #endif
-	continue;
+          continue;
+        }
+
+        // kptodo some market trading days are half days
+        std::string url;
+        url.reserve(128);
+        url = endpoint + "/time_series?apikey=" + key + "&interval="
+          + interval + "&symbol=" + symbol + "&start_date="
+          + to_iso_extended_string(*ditr) + "%2009:30:00"
+          + "&end_date=" + to_iso_extended_string(*ditr)
+          + "%2015:30:00" + "&format=JSON";
+
+        urlList.emplace_back(std::make_pair(url, (*ditr)));
       }
-
-      std::string url;
-      url.reserve(128);
-      url = endpoint + "/time_series?apikey=" + key + "&interval="
-        + interval + "&symbol=" + symbol + "&start_date="
-        + to_iso_extended_string(*ditr) + "%2009:30:00"
-        + "&end_date=" + to_iso_extended_string(*ditr)
-        + "%2015:30:00" + "&format=JSON";
-
-      urlList.emplace_back(std::make_pair(url, (*ditr)));
     }
   }
 }
 
 //=============================================================================
 //=============================================================================
-void Calendar::addAllMarketHolidays()
+void Calendar::addAllMarketHolidays(unsigned short year)
 {
   //
   // kptodo
@@ -131,7 +119,7 @@ void Calendar::addAllMarketHolidays()
   // For Western NY, if the first falls on a Sunday, market is closed the
   // following Monday, if it falls on Saturday, no closure
   {
-    date tmpDate = from_string(std::to_string(mYear) + "-01-01");
+    date tmpDate = from_string(std::to_string(year) + "-01-01");
     if (tmpDate.day_of_week() == Sunday)
       mHolidays.push_back(new partial_date(2, Jan));
     else
@@ -141,9 +129,9 @@ void Calendar::addAllMarketHolidays()
   // Juneteenth: officially became a federal holiday in 2022
   // If it falls on a Saturday, observed the day prior. If it's on a Sunday,
   // the next weekday
-  if (mYear >= 2022)
+  if (year >= 2022)
   {
-    date tmpDate = from_string(std::to_string(mYear) + "-06-19");
+    date tmpDate = from_string(std::to_string(year) + "-06-19");
     if (tmpDate.day_of_week() == Saturday)
       mHolidays.push_back(new partial_date(18, Jun));
     else if (tmpDate.day_of_week() == Sunday)
@@ -156,7 +144,7 @@ void Calendar::addAllMarketHolidays()
   // If it falls on a Saturday, observed the day prior. If it's on a Sunday,
   // the next weekday
   {
-    date tmpDate = from_string(std::to_string(mYear) + "-07-04");
+    date tmpDate = from_string(std::to_string(year) + "-07-04");
     if (tmpDate.day_of_week() == Saturday)
       mHolidays.push_back(new partial_date(3, Jul));
     else if (tmpDate.day_of_week() == Sunday)
@@ -169,7 +157,7 @@ void Calendar::addAllMarketHolidays()
   // If it falls on a Saturday, observed the day prior. If it's on a Sunday,
   // the next weekday
   {
-    date tmpDate = from_string(std::to_string(mYear) + "-12-25");
+    date tmpDate = from_string(std::to_string(year) + "-12-25");
     if (tmpDate.day_of_week() == Saturday)
       mHolidays.push_back(new partial_date(24, Dec));
     else if (tmpDate.day_of_week() == Sunday)
@@ -200,21 +188,21 @@ void Calendar::addAllMarketHolidays()
   mHolidays.push_back(new nth_dow(nth_dow::first, Monday, Sep));
   
   // Thanksgiving
-  mHolidays.push_back(new nth_dow(nth_dow::fourth, Thursday, Nov)); 
+  mHolidays.push_back(new nth_dow(nth_dow::fourth, Thursday, Nov));
 }
 
 //=============================================================================
 //=============================================================================
-void Calendar::generateAllHolidaysForYear()
+void Calendar::generateAllHolidaysForYear(unsigned short year)
 {
-  if (mYear <= 0)
+  if (year <= 0)
   {
     std::cout << "Calendar::generateAllHolidaysForYear(): "
-	      << "invalid year: " << mYear << std::endl;
+	      << "invalid year: " << year << std::endl;
     return;
   }
       
   for (std::vector<year_based_generator*>::iterator it = mHolidays.begin();
        it != mHolidays.end(); ++it)
-    mMarketHolidaysForYear.insert((*it)->get_date(mYear));
+    mMarketHolidaysForYear.insert((*it)->get_date(year));
 }

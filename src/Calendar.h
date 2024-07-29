@@ -16,7 +16,8 @@ public:
   // the current month
   // Essentially if no end day is set, will generate a url for each day of
   // the current month
-  Calendar(unsigned short year = 0,
+  Calendar(unsigned short startYear = 0,
+           unsigned short endYear = 0,
            unsigned short startMonth = 0,
            unsigned short endMonth = 0,
            unsigned short startDay = 0,
@@ -30,7 +31,10 @@ public:
   
   // Note: calling this function has the side-effect of inserting the market
   // holidays for the given year into mAllHolidays
-  void setYear(unsigned short year);
+  void setStartYear(unsigned short year) { mStartYear = year; }
+
+  // Calling this function does not have the same side-effect
+  void setEndYear(unsigned short year) { mEndYear = year; }
 
   void setStartMonth(unsigned short month) { mStartMonth = month; }
   void setEndMonth(unsigned short month) { mEndMonth = month; }
@@ -38,14 +42,16 @@ public:
   void setEndDay(unsigned short day) { mEndDay = day; }
 
   // Getters for calendar dates
-  unsigned short getYear() const { return mYear; }
+  unsigned short getStartYear() const { return mStartYear; }
+  unsigned short getEndYear() const { return mEndYear; }  
   unsigned short getStartMonth() const { return mStartMonth; }
   unsigned short getEndMonth() const { return mEndMonth; }
   unsigned short getStartDay() const { return mStartDay; }
   unsigned short getEndDay() const { return mEndDay; }
 
   // Validate dates for calendar are non-default constructed
-  bool isYearSet() const { return mYear != 0; }
+  bool isStartYearSet() const { return mStartYear != 0; }
+  bool isEndYearSet() const { return mEndYear != 0; }  
   bool isStartMonthSet() const { return mStartMonth != 0; }
   bool isEndMonthSet() const { return mEndMonth != 0; }
   bool isStartDaySet() const { return mStartDay != 0; }
@@ -71,10 +77,10 @@ public:
 private:
 
   // Inserts market holidays into mHolidays
-  void addAllMarketHolidays();
+  void addAllMarketHolidays(unsigned short year);
 
   // Calculates the actual dates for the given holidays based on the year
-  void generateAllHolidaysForYear();
+  void generateAllHolidaysForYear(unsigned short year);
   
   // Container for market holidays regardless of year
   std::vector<boost::gregorian::year_based_generator*> mHolidays;
@@ -82,10 +88,9 @@ private:
   // Container for market holidays based on the current calendar year
   std::set<boost::gregorian::date> mMarketHolidaysForYear;
 
-  // Year in which to generate the holidays for
-  unsigned short mYear;
-
   // WebDataRetriever will set these based on desired time span
+  unsigned short mStartYear;
+  unsigned short mEndYear;
   unsigned short mStartMonth;
   unsigned short mEndMonth;
   unsigned short mStartDay;

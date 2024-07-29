@@ -24,7 +24,8 @@ public:
   void setPrecision(int value) { mPrecision = value; }
 
   // API endpoint parameters mCalendar owns
-  void setYear(unsigned short year) { mCalendar.setYear(year); }
+  void setStartYear(unsigned short year) { mCalendar.setStartYear(year); }
+  void setEndYear(unsigned short year) { mCalendar.setEndYear(year); }  
   void setStartMonth(unsigned short month) { mCalendar.setStartMonth(month); }
   void setEndMonth(unsigned short month) { mCalendar.setEndMonth(month); }
   void setStartDay(unsigned short day) { mCalendar.setStartDay(day); }

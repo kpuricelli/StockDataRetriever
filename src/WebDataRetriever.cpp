@@ -31,7 +31,8 @@ WebDataRetriever::WebDataRetriever()
   : mCurlHandle(nullptr), mResponsePtr(nullptr)
 {
   // kptodo put this in an environment variable
-  mApiKey = "cfa77bb3562b4677aed66bcc63659505";
+  //mApiKey = "cfa77bb3562b4677aed66bcc63659505";
+  mApiKey = "be1939143c90437db352bd580dd6ecd9";
   
   initInternal();
 }
@@ -173,6 +174,9 @@ void WebDataRetriever::sendRangeOfRequests()
   // For each request
   for (const auto& url : mUrlList)
   {
+    // kptodo rm
+    std::cout << url.first << std::endl;
+    
     // Time as of sending the request
     startTime = boost::posix_time::second_clock::local_time();
 
