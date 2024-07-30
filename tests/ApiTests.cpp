@@ -10,15 +10,16 @@
 #include "../src/Calendar.h"
 
 //=============================================================================
-// Test case: Calendar default constructor
+// Test case: Calendar default constructor should do nothing
 //=============================================================================
-TEST_CASE("Calendar", "[GetFixedMarketHolidays]")
+TEST_CASE("Calendar", "[DefaultConstructor]")
 {
   Calendar calendar;
 
   // Validate the assumption that the Calendar constructor default initalizes
   // it's internal dates to 0
-  REQUIRE(!calendar.isYearSet());
+  REQUIRE(!calendar.isStartYearSet());
+  REQUIRE(!calendar.isEndYearSet());  
   REQUIRE(!calendar.isStartMonthSet());
   REQUIRE(!calendar.isEndMonthSet());
   REQUIRE(!calendar.isStartDaySet());
@@ -26,7 +27,6 @@ TEST_CASE("Calendar", "[GetFixedMarketHolidays]")
 
   //===========================================================================
   // Section: fixed market holidays
-  // kptodo: this does not include good friday...
   //===========================================================================
   SECTION("Calendar should insert 0 market holidays with no provided year")
   {
@@ -42,25 +42,23 @@ TEST_CASE("Calendar", "[GetMarketHolidaysForYear:2023]")
   using namespace boost::gregorian;
   
   // Year: 2023
-  const unsigned short year = 2023;
+  const unsigned short startYear = 2023;
+  const unsigned short endYear = 2023;
 
-  // Start month: 12
+  // Month: 12
   const unsigned short startMonth = 12;
-
-  // End month: 12
   const unsigned short endMonth = 12;
 
-  // Start day: 1
+  // Day: 1
   const unsigned short startDay = 1;
-
-  // End day: 1
   const unsigned short endDay = 1;
 
-  Calendar calendar(year, startMonth, endMonth, startDay, endDay);
+  Calendar calendar(startYear, endYear, startMonth, endMonth, startDay, endDay);
 
   // Validate the assumption that the Calendar constructor initalizes its
   // internal dates to be non-default constructed
-  REQUIRE(calendar.isYearSet());
+  REQUIRE(calendar.isStartYearSet());
+  REQUIRE(calendar.isEndYearSet());  
   REQUIRE(calendar.isStartMonthSet());
   REQUIRE(calendar.isEndMonthSet());
   REQUIRE(calendar.isStartDaySet());
@@ -68,7 +66,8 @@ TEST_CASE("Calendar", "[GetMarketHolidaysForYear:2023]")
 
   // Validate the assumption that the Calendar constructor set the correct
   // dates given to the constructor
-  REQUIRE(calendar.getYear() == year);
+  REQUIRE(calendar.getStartYear() == startYear);
+  REQUIRE(calendar.getEndYear() == endYear);  
   REQUIRE(calendar.getStartMonth() == startMonth);
   REQUIRE(calendar.getEndMonth() == endMonth);
   REQUIRE(calendar.getStartDay() == startDay);
@@ -79,8 +78,10 @@ TEST_CASE("Calendar", "[GetMarketHolidaysForYear:2023]")
   //===========================================================================
   SECTION("Calendar should provide market holiday dates for given year: 2023")
   {
-    // kptodo
-    // missing: Good Friday
+    // Fill the std::set with this year's holidays
+    calendar.addAllMarketHolidays(startYear);
+
+    // Grab the std::set with this year's holidays
     const auto& marketHolidaysForYear = calendar.getMarketHolidaysForYear();
 
     // Market holidays for the year 2023:
@@ -91,6 +92,8 @@ TEST_CASE("Calendar", "[GetMarketHolidaysForYear:2023]")
     const date mlkDay = from_string("2023-01-16");
     // 2023-02-20 (President's Day)
     const date presidentsDay = from_string("2023-02-20");
+    // 2023-04-07 (Good Friday)
+    const date goodFriday = from_string("2023-04-07");
     // 2023-05-29 (Memorial Day)
     const date memorialDay = from_string("2023-05-29");
     // 2023-06-19 (Juneteenth)
@@ -108,12 +111,15 @@ TEST_CASE("Calendar", "[GetMarketHolidaysForYear:2023]")
     REQUIRE(marketHolidaysForYear.contains(newYearsDay));
     REQUIRE(marketHolidaysForYear.contains(mlkDay));
     REQUIRE(marketHolidaysForYear.contains(presidentsDay));
+    REQUIRE(marketHolidaysForYear.contains(goodFriday)); 
     REQUIRE(marketHolidaysForYear.contains(memorialDay));
     REQUIRE(marketHolidaysForYear.contains(juneteenth));
     REQUIRE(marketHolidaysForYear.contains(usIndependenceDay));
     REQUIRE(marketHolidaysForYear.contains(laborDay));
     REQUIRE(marketHolidaysForYear.contains(thanksgivingDay));
     REQUIRE(marketHolidaysForYear.contains(christmasDay));
+
+    REQUIRE(marketHolidaysForYear.size() == 10);
   }
 }
 
@@ -128,25 +134,23 @@ TEST_CASE("Calendar", "[GetMarketHolidaysForYear:2020]")
   using namespace boost::gregorian;
   
   // Year: 2020
-  const unsigned short year = 2020;
+  const unsigned short startYear = 2020;
+  const unsigned short endYear = 2020;
 
-  // Start month: 12
+  // Month: 12
   const unsigned short startMonth = 12;
-
-  // End month: 12
   const unsigned short endMonth = 12;
 
-  // Start day: 1
+  // Day: 1
   const unsigned short startDay = 1;
-
-  // End day: 1
   const unsigned short endDay = 1;
 
-  Calendar calendar(year, startMonth, endMonth, startDay, endDay);
+  Calendar calendar(startYear, endYear, startMonth, endMonth, startDay, endDay);
 
   // Validate the assumption that the Calendar constructor initalizes its
   // internal dates to be non-default constructed
-  REQUIRE(calendar.isYearSet());
+  REQUIRE(calendar.isStartYearSet());
+  REQUIRE(calendar.isEndYearSet());  
   REQUIRE(calendar.isStartMonthSet());
   REQUIRE(calendar.isEndMonthSet());
   REQUIRE(calendar.isStartDaySet());
@@ -154,7 +158,8 @@ TEST_CASE("Calendar", "[GetMarketHolidaysForYear:2020]")
 
   // Validate the assumption that the Calendar constructor set the correct
   // dates given to the constructor
-  REQUIRE(calendar.getYear() == year);
+  REQUIRE(calendar.getStartYear() == startYear);
+  REQUIRE(calendar.getEndYear() == endYear);  
   REQUIRE(calendar.getStartMonth() == startMonth);
   REQUIRE(calendar.getEndMonth() == endMonth);
   REQUIRE(calendar.getStartDay() == startDay);
@@ -165,8 +170,10 @@ TEST_CASE("Calendar", "[GetMarketHolidaysForYear:2020]")
   //===========================================================================
   SECTION("Calendar should provide market holiday dates for year: 2020")
   {
-    // kptodo
-    // missing: Good Friday
+    // Fill the std::set with this year's holidays
+    calendar.addAllMarketHolidays(startYear);
+
+    // Grab the std::set with this year's holidays
     const auto& marketHolidaysForYear = calendar.getMarketHolidaysForYear();
 
     // Market holidays for the year 2020:
@@ -177,6 +184,8 @@ TEST_CASE("Calendar", "[GetMarketHolidaysForYear:2020]")
     const date mlkDay = from_string("2020-01-20");
     // 2020-02-17 (President's Day)
     const date presidentsDay = from_string("2020-02-17");
+    // 2023-04-07 (Good Friday)
+    const date goodFriday = from_string("2020-04-10");
     // 2020-05-25 (Memorial Day)
     const date memorialDay = from_string("2020-05-25");
     // 2020-07-03 (US Independence Day) (observed)
@@ -192,11 +201,14 @@ TEST_CASE("Calendar", "[GetMarketHolidaysForYear:2020]")
     REQUIRE(marketHolidaysForYear.contains(newYearsDay));
     REQUIRE(marketHolidaysForYear.contains(mlkDay));
     REQUIRE(marketHolidaysForYear.contains(presidentsDay));
+    REQUIRE(marketHolidaysForYear.contains(goodFriday));    
     REQUIRE(marketHolidaysForYear.contains(memorialDay));
     REQUIRE(marketHolidaysForYear.contains(usIndependenceDay));
     REQUIRE(marketHolidaysForYear.contains(laborDay));
     REQUIRE(marketHolidaysForYear.contains(thanksgivingDay));
-    REQUIRE(marketHolidaysForYear.contains(christmasDay));    
+    REQUIRE(marketHolidaysForYear.contains(christmasDay));
+
+    REQUIRE(marketHolidaysForYear.size() == 10);
   }
 }
 

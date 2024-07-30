@@ -24,24 +24,16 @@ public:
            unsigned short endDay = 0);
   ~Calendar();
 
-  //
-  // kptodo add a start year / end year to iter over years (?)
-  // unknown if that would break the api
-  //
-  
-  // Note: calling this function has the side-effect of inserting the market
-  // holidays for the given year into mAllHolidays
+
+  // Setters for calendar time spans
   void setStartYear(unsigned short year) { mStartYear = year; }
-
-  // Calling this function does not have the same side-effect
   void setEndYear(unsigned short year) { mEndYear = year; }
-
   void setStartMonth(unsigned short month) { mStartMonth = month; }
   void setEndMonth(unsigned short month) { mEndMonth = month; }
   void setStartDay(unsigned short day) { mStartDay = day; }
   void setEndDay(unsigned short day) { mEndDay = day; }
 
-  // Getters for calendar dates
+  // Getters for calendar time spans
   unsigned short getStartYear() const { return mStartYear; }
   unsigned short getEndYear() const { return mEndYear; }  
   unsigned short getStartMonth() const { return mStartMonth; }
@@ -66,6 +58,11 @@ public:
                     const std::string& interval);
 
   // kptodo
+  // I liked when this was private, but need to expose for testing purposes
+  // Inserts market holidays into mHolidays
+  void addAllMarketHolidays(unsigned short year);
+
+  // kptodo
   // This should probably be removed, but exposed for testing purposes
   size_t getNumberOfFixedMarketHolidays() const { return mHolidays.size(); }
 
@@ -76,8 +73,11 @@ public:
 
 private:
 
-  // Inserts market holidays into mHolidays
-  void addAllMarketHolidays(unsigned short year);
+  // Resets mHolidays and mMarketHolidaysForYear
+  void resetHolidays();
+
+  // Calculate the date of Good Friday for this year
+  boost::gregorian::date calculateGoodFriday(unsigned short year);
 
   // Calculates the actual dates for the given holidays based on the year
   void generateAllHolidaysForYear(unsigned short year);

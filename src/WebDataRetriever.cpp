@@ -31,8 +31,8 @@ WebDataRetriever::WebDataRetriever()
   : mCurlHandle(nullptr), mResponsePtr(nullptr)
 {
   // kptodo put this in an environment variable
-  //mApiKey = "cfa77bb3562b4677aed66bcc63659505";
-  mApiKey = "be1939143c90437db352bd580dd6ecd9";
+  mApiKey = "cfa77bb3562b4677aed66bcc63659505";
+  //mApiKey = "be1939143c90437db352bd580dd6ecd9";
   
   initInternal();
 }
@@ -143,7 +143,6 @@ void WebDataRetriever::sendRangeOfRequests()
     return;
   }
 
-  // kptodo rm (?)
   // General info about total number of requests we have in our list to send
   std::cout << "WebDataRetriever::sendRangeOfRequests(): "
             << mUrlList.size() << " requests to process" << std::endl;
@@ -174,8 +173,8 @@ void WebDataRetriever::sendRangeOfRequests()
   // For each request
   for (const auto& url : mUrlList)
   {
-    // kptodo rm
-    std::cout << url.first << std::endl;
+    // kptodo rm (?)
+    // std::cout << url.first << std::endl;
     
     // Time as of sending the request
     startTime = boost::posix_time::second_clock::local_time();
@@ -217,7 +216,6 @@ void WebDataRetriever::sendRangeOfRequests()
     if (timeLimit.total_seconds() <=
         (time4EightRequests.total_seconds() + timeBuffer.total_seconds()))
     {
-      // kptodo rm (?)
 #if DEBUG
       std::cout << "Time limit reached!" << std::endl;
       std::cout << "Sent " << requestsThisMinute << " requests this minute"
@@ -254,7 +252,6 @@ void WebDataRetriever::sendRangeOfRequests()
     //     the next request
     else if ((requestsThisMinute % 8) == 0)
     {
-      // kptodo rm (?)
 #if DEBUG
       std::cout << "Request limit reached!" << std::endl;
       std::cout << "Sent " << requestsThisMinute << " requests this minute"
@@ -274,7 +271,6 @@ void WebDataRetriever::sendRangeOfRequests()
       const auto time2wait =
         std::chrono::minutes(1) - std::chrono::seconds(endTimeAsTm.tm_sec);
 
-      // kptodo rm (?)
 #if DEBUG
       std::cout << time2wait.count() << "s until next minute. Calling "
         "std::this_thread_sleep_for(" << time2wait.count() << ")" << std::endl;

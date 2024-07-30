@@ -22,9 +22,9 @@ int main(/*int argc, char* argv[]*/)
   w.setInterval("1min");
 
   // Calendar stuff
-  w.setStartYear(2021);
+  w.setStartYear(2022);
   w.setEndYear(2022);
-  w.setStartMonth(1);
+  w.setStartMonth(11);
   w.setEndMonth(12);
   w.setStartDay(1);
   //w.setEndDay(29);

@@ -23,7 +23,7 @@ Calendar::Calendar(unsigned short startYear, unsigned short endYear,
 //=============================================================================
 Calendar::~Calendar()
 {
-  // kptodo delete the partial_dates in mHolidays
+  // kptodo delete the partial_dates in mHolidays (?)
 }
 
 //=============================================================================
@@ -34,18 +34,13 @@ void Calendar::generateUrls(std::vector<std::pair<std::string, date>>& urlList,
                             const std::string& symbol,
                             const std::string& interval)
 {
-  //
-  // kptodo
-  // For testing: specify the start / end month
-  // For gathering all data, want to do all months
-  //
-
   // For each year
   for (unsigned short year = mStartYear; year <= mEndYear; ++year)
   {
     // Update the holidays with the current year's dates
+    resetHolidays();
     addAllMarketHolidays(year);    
-    generateAllHolidaysForYear(year);
+    //generateAllHolidaysForYear(year);
     
     // For each month
     for (unsigned short month = mStartMonth; month <= mEndMonth; ++month)
@@ -63,7 +58,8 @@ void Calendar::generateUrls(std::vector<std::pair<std::string, date>>& urlList,
       for (; ditr <= endOfMonth; ++ditr)
       {
         // Skip all weekends
-        if ((*ditr).day_of_week() == Saturday || (*ditr).day_of_week() == Sunday)
+        if ((*ditr).day_of_week() == Saturday ||
+            (*ditr).day_of_week() == Sunday)
         {
 #if DEBUG
           std::cout << "Skipping weekend on date: "
@@ -98,12 +94,55 @@ void Calendar::generateUrls(std::vector<std::pair<std::string, date>>& urlList,
 }
 
 //=============================================================================
+// Resets mHolidays and mMarketHolidaysForYear
+//=============================================================================
+void Calendar::resetHolidays()
+{
+  mHolidays.clear();
+  mMarketHolidaysForYear.clear();
+}
+
+//=============================================================================
+// Calculate the date of Easter for this year
+// Credit:
+// web.archive.org/web/20120223154950/aa.usno.navy.mil/faq/docs/easter.php
+//
+// Then take Easter Sunday, and go back in time two days = Good Friday
+//=============================================================================
+date Calendar::calculateGoodFriday(unsigned short year)
+{
+  // kptodo clean this up a bit maybe...? v difficult to look at
+  int c = year / 100;
+  int n = year - 19 * ( year / 19 );
+  int k = ( c - 17 ) / 25;
+  int i = c - c / 4 - ( c - k ) / 3 + 19 * n + 15;
+  i = i - 30 * ( i / 30 );
+  i = i - ( i / 28 ) * ( 1 - ( i / 28 ) * ( 29 / ( i + 1 ) )
+                         * ( ( 21 - n ) / 11 ) );
+  int j = year + year / 4 + i + 2 - c + c / 4;
+  j = j - 7 * ( j / 7 );
+  int l = i - j;
+  int m = 3 + ( l + 40 ) / 44;
+  int d = l + 28 - 31 * ( m / 4 );
+
+  // Construct the date of Easter
+  const date easter = from_string(std::to_string(year) + "-" +
+                                  std::to_string(m) + "-" + std::to_string(d));
+
+  // Could do a little extra math and construct Good Friday without having to
+  // create easter, but this way we can let boost worry about whether two days
+  // before Easter Sunday is the same month or not, etc.
+  const date_duration dd(2);
+
+  // Two days before Easter Sunday is Good Friday
+  const date gFriday = easter - dd;
+  return gFriday;
+}
+
+//=============================================================================
 //=============================================================================
 void Calendar::addAllMarketHolidays(unsigned short year)
 {
-  //
-  // kptodo
-  // good friday..unsure how to calculate that yet (stub below)
   //
   // kptodo
   // Market half days:
@@ -113,7 +152,7 @@ void Calendar::addAllMarketHolidays(unsigned short year)
   //
 
   //
-  // Fixed holidays
+  // Holidays with the same literal date each year (not market observed date)
   //
 
   // For Western NY, if the first falls on a Sunday, market is closed the
@@ -152,7 +191,7 @@ void Calendar::addAllMarketHolidays(unsigned short year)
     else
       mHolidays.push_back(new partial_date(4, Jul));      
    }
-  
+
   // Christmas Day
   // If it falls on a Saturday, observed the day prior. If it's on a Sunday,
   // the next weekday
@@ -167,7 +206,7 @@ void Calendar::addAllMarketHolidays(unsigned short year)
    }
 
   //
-  // Rotating holidays
+  // Holidays with the same position in the week / month each year
   //
   
   // nth_day_of_week_in_month is way too long
@@ -179,8 +218,6 @@ void Calendar::addAllMarketHolidays(unsigned short year)
   // President's Day
   mHolidays.push_back(new nth_dow(nth_dow::third, Monday, Feb));
 
-  // kptodo good friday
-
   // Memorial Day: using 'fifth' defaults to 'last monday in month' :)
   mHolidays.push_back(new nth_dow(nth_dow::fifth, Monday, May));
 
@@ -189,6 +226,9 @@ void Calendar::addAllMarketHolidays(unsigned short year)
   
   // Thanksgiving
   mHolidays.push_back(new nth_dow(nth_dow::fourth, Thursday, Nov));
+
+  // Insert into mMarketHolidaysForYear
+  generateAllHolidaysForYear(year);
 }
 
 //=============================================================================
@@ -201,6 +241,11 @@ void Calendar::generateAllHolidaysForYear(unsigned short year)
 	      << "invalid year: " << year << std::endl;
     return;
   }
+
+  // Since we have a formula to calculate Easter Sunday by year, the date
+  // two days in the past from Easter is Good Friday
+  const date& goodFriday = calculateGoodFriday(year);
+  mMarketHolidaysForYear.insert(goodFriday);
       
   for (std::vector<year_based_generator*>::iterator it = mHolidays.begin();
        it != mHolidays.end(); ++it)
