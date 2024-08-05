@@ -30,9 +30,12 @@ namespace
 WebDataRetriever::WebDataRetriever()
   : mCurlHandle(nullptr), mResponsePtr(nullptr)
 {
-  // kptodo put this in an environment variable
-  mApiKey = "cfa77bb3562b4677aed66bcc63659505";
-  //mApiKey = "be1939143c90437db352bd580dd6ecd9";
+  // Get the api key from the env var
+#if UseAPIKey1
+  mApiKey = std::getenv("tdkey1");
+#else
+  mApiKey = std::getenv("tdkey2");
+#endif
   
   initInternal();
 }
@@ -337,6 +340,7 @@ void WebDataRetriever::sendRequest(const std::string& url)
 void WebDataRetriever::parseJsonFile(SymbolContainer& /*container*/)
 {
   // kptodo
+  // should this be moved into a different class?
   // Open the file
 #if 0
   // kptodo
@@ -391,6 +395,7 @@ void WebDataRetriever::parseJsonFile(SymbolContainer& /*container*/)
 }
 
 //=============================================================================
+// Create a filename in the form: of symbol_interval_year_month_day.json
 //=============================================================================
 void WebDataRetriever::writeResponse2File(const std::string& filename)
 {
@@ -398,7 +403,8 @@ void WebDataRetriever::writeResponse2File(const std::string& filename)
   mResponse.reserve(mResponsePtr->size());
   mResponse = *mResponsePtr;
 
-  const static std::string path = "../json/";
+  // Moved the json files into time-specific directories
+  const std::string path = "../json/" + mInterval + "/";
   
   std::ofstream inputFile(path + filename);
   if (inputFile.is_open())

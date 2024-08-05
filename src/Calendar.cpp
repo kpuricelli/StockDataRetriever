@@ -40,7 +40,6 @@ void Calendar::generateUrls(std::vector<std::pair<std::string, date>>& urlList,
     // Update the holidays with the current year's dates
     resetHolidays();
     addAllMarketHolidays(year);    
-    //generateAllHolidaysForYear(year);
     
     // For each month
     for (unsigned short month = mStartMonth; month <= mEndMonth; ++month)

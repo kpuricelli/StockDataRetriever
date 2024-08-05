@@ -26,6 +26,13 @@ CXX := g++ -std=c++20
 OptFlags := -O2
 DebugFlags := -g -DDEBUG
 
+# Pass which api key to use
+ifeq ($(USEAPIKEY1),yes)
+  APIKeyFlag := -DUseAPIKey1
+else
+  APIKeyFlag := -DUseAPIKey2
+endif
+
 # Add the opt / debug flags if desired
 ifeq ($(STX_OPTIMIZE),none)
   CXX_DEBUG := $(DebugFlags)
@@ -42,7 +49,7 @@ endif
 
 # More flags
 CXX_WARN := -Wall -Werror -Wextra -Wconversion -pedantic
-CXXFLAGS := $(CXX_WARN) $(CXX_DEBUG) $(CXX_OPTIMIZE)
+CXXFLAGS := $(CXX_WARN) $(CXX_DEBUG) $(CXX_OPTIMIZE) $(APIKeyFlag)
 
 # Libs
 ifeq (, $(findstring Linux, $($(shell uname -s))))
