@@ -10,18 +10,23 @@ class StockTimeSeriesData
 {
 public:
 
-  StockTimeSeriesData(const std::string& symbol, const std::string& timeStamp,
-                      double open, double high, double low, double close,
+  StockTimeSeriesData();
+  StockTimeSeriesData(double open, double high, double low, double close,
                       double volume);
 
-  const std::string& getTimestamp() const { return mDateTime; }
 
+  // Get values from this timepoint
+  double getOpenValue() const { return mOpenValue; }
+  double getHighValue() const { return mHighValue; }
+  double getLowValue() const { return mLowValue; }
+  double getCloseValue() const { return mCloseValue; }
+  double getVolume() const { return mVolume; }
+
+  // kptodo needed (?)
   void debugPrint() const;
   
 private:
-  
-  std::string mSymbol;
-  std::string mDateTime;
+
   double mOpenValue;
   double mHighValue;
   double mLowValue;

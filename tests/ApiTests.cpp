@@ -8,6 +8,8 @@
 #define CATCH_CONFIG_MAIN
 #include "catch_amalgamated.hpp"
 #include "../src/Calendar.h"
+#include "../src/SymbolContainer.h"
+#include "../src/StockTimeSeriesData.h"
 
 //=============================================================================
 // Test case: Calendar default constructor should do nothing
@@ -119,6 +121,7 @@ TEST_CASE("Calendar", "[GetMarketHolidaysForYear:2023]")
     REQUIRE(marketHolidaysForYear.contains(thanksgivingDay));
     REQUIRE(marketHolidaysForYear.contains(christmasDay));
 
+    // Should be 10 holidays (includes Juneteenth)
     REQUIRE(marketHolidaysForYear.size() == 10);
   }
 }
@@ -208,21 +211,158 @@ TEST_CASE("Calendar", "[GetMarketHolidaysForYear:2020]")
     REQUIRE(marketHolidaysForYear.contains(thanksgivingDay));
     REQUIRE(marketHolidaysForYear.contains(christmasDay));
 
-    REQUIRE(marketHolidaysForYear.size() == 10);
+    // Should be 9 holidays (no Juneteenth)
+    REQUIRE(marketHolidaysForYear.size() == 9);
   }
 }
 
-// kptodo
-// Note: this has been randomly tested with the files in referenceJson/
-//       would be nice to test a larger dataset though
-//=============================================================================
-// Test case: Compare programatically downloaded json to ones saved off the
-//            API website itself
-//=============================================================================
-// TEST_CASE("WebDataRetriever", "[CompareJsonToReference]")
 
 // kptodo
+// this is probably a more feasible test if extracted into a timing class
 //=============================================================================
 // Test case: Ensure we don't send more requests / min than 8 (API time limit)
 //=============================================================================
 // TEST_CASE("WebDataRetriever", "[SendRangeOfRequests]")
+
+
+//=============================================================================
+// Test case: ensure we load the json data into the containers correctly
+//=============================================================================
+TEST_CASE("SymbolContainer", "[loadSymbolsFromJson]")
+{
+  SymbolContainer symbols;
+
+  // Validate the assumption that the SymbolContainer constructor default
+  // initalizes its internal map to empty
+  const std::map<std::string, SymbolContainer::SymbolData> symbolData =
+    symbols.getSymbols();
+  REQUIRE(symbolData.empty());
+
+
+  //===========================================================================
+  // Section: insert new symbol
+  //===========================================================================
+  SECTION("SymbolContainer should read the given json file (1h interval)")
+  {
+    const std::string filename = "../referenceJson/AAPL-1h-2023-12-01.json";
+
+    // Parse the json file and insert into the SymbolContainer
+    symbols.loadFromJson(filename);
+
+    // At a 1 hour interval, should have 7 AAPL timestamps
+    const auto AAPLIter = symbols.getSymbols().find("AAPL");
+    const auto numAAPLTimestamps = AAPLIter->second.size();
+    REQUIRE(numAAPLTimestamps == 7);
+  }
+
+  //===========================================================================
+  // Section: insert symbol with key already in map
+  //===========================================================================
+  SECTION("Insert symbol which already has a key in the map")
+  {
+    const std::string filename = "../referenceJson/AAPL-1h-2023-12-01.json";
+
+    // Parse the json file and insert into the SymbolContainer
+    symbols.loadFromJson(filename);
+
+    // At a 1 hour interval, should have 7 AAPL timestamps
+    auto AAPLIter = symbols.getSymbols().find("AAPL");
+    auto numAAPLTimestamps = AAPLIter->second.size();
+    REQUIRE(numAAPLTimestamps == 7);
+
+    // Second file
+    const std::string filename2 = "../referenceJson/AAPL-1h-2023-12-04.json";
+    symbols.loadFromJson(filename2);
+
+    // Two days of data at a 1h interval should have 14 timestamps
+    AAPLIter = symbols.getSymbols().find("AAPL");
+    numAAPLTimestamps = AAPLIter->second.size();
+    REQUIRE(numAAPLTimestamps == 14);
+  }
+
+  //===========================================================================
+  // Section: insert multiple symbols
+  //===========================================================================
+  SECTION("Insert multiple symbols")
+  {
+    const std::string filename = "../referenceJson/AAPL-1h-2023-12-01.json";
+
+    // Parse the json file and insert into the SymbolContainer
+    symbols.loadFromJson(filename);
+
+    // At a 1 hour interval, should have 7 AAPL timestamps
+    const auto AAPLIter = symbols.getSymbols().find("AAPL");
+    const auto numAAPLTimestamps = AAPLIter->second.size();
+
+    // Assert first symbol was inserted as expected
+    REQUIRE(numAAPLTimestamps == 7);
+
+    // New symbol data file
+    const std::string qqqfilename = "../referenceJson/QQQ-1h-2023-12-01.json";
+
+    // Parse the json file and insert into the SymbolContainer
+    symbols.loadFromJson(qqqfilename);
+
+    // At a 1 hour interval, should have 7 QQQ timestamps
+    const auto QQQIter = symbols.getSymbols().find("QQQ");
+    const auto numQQQTimestamps = QQQIter->second.size();
+
+    // Assert both the AAPL and QQQ timestamps coexist
+    REQUIRE(numAAPLTimestamps == 7);
+    REQUIRE(numQQQTimestamps == 7);
+  }
+
+  //===========================================================================
+  // Section: check symbol values
+  //===========================================================================
+  SECTION("Check a symbol's values")
+  {
+    // For comparing floating point numbers
+    using namespace Catch::Matchers;
+    constexpr double tolerance = 0.1;
+
+    const std::string filename = "../referenceJson/AAPL-1h-2023-12-01.json";
+
+    // Parse the json file and insert into the SymbolContainer
+    symbols.loadFromJson(filename);
+
+    // At a 1 hour interval, should have 7 AAPL timestamps
+    const auto AAPLIter = symbols.getSymbols().find("AAPL");
+    const auto numAAPLTimestamps = AAPLIter->second.size();
+
+    // Assert first symbol was inserted as expected
+    REQUIRE(numAAPLTimestamps == 7);
+
+    // Map of StockTimeSeriesData to check
+    const SymbolContainer::SymbolData& aaplMap = symbols.getSymbolData("AAPL");
+    
+    // Setup some variables to check
+    std::string datetime = "2023-12-01 09:30:00";
+    double open = 190.3;
+    double high = 190.5;
+    double low = 189.23;
+    double close = 190.06;
+    double volume = 8588385.0;
+
+    const StockTimeSeriesData& data0930 = aaplMap.at(datetime);
+    REQUIRE_THAT(open, WithinAbs(data0930.getOpenValue(), tolerance));
+    REQUIRE_THAT(high, WithinAbs(data0930.getHighValue(), tolerance));
+    REQUIRE_THAT(low, WithinAbs(data0930.getLowValue(), tolerance));
+    REQUIRE_THAT(close, WithinAbs(data0930.getCloseValue(), tolerance));    
+    REQUIRE_THAT(volume, WithinAbs(data0930.getVolume(), tolerance));
+    
+    // Check a later timestamp's values
+    datetime = "2023-12-01 11:30:00";
+    open = 190.84;
+    high = 191.45;
+    low = 190.6;
+    close = 191.445;
+    volume = 5387598.0;
+    const StockTimeSeriesData& data1130 = aaplMap.at(datetime);
+    REQUIRE_THAT(open, WithinAbs(data1130.getOpenValue(), tolerance));
+    REQUIRE_THAT(high, WithinAbs(data1130.getHighValue(), tolerance));
+    REQUIRE_THAT(low, WithinAbs(data1130.getLowValue(), tolerance));
+    REQUIRE_THAT(close, WithinAbs(data1130.getCloseValue(), tolerance));
+    REQUIRE_THAT(volume, WithinAbs(data1130.getVolume(), tolerance));
+  }
+}

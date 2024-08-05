@@ -4,11 +4,8 @@
 //=============================================================================
 //=============================================================================
 StockTimeSeriesData::
-StockTimeSeriesData(const std::string& symbol, const std::string& timeStamp,
-                    double open, double high,  double low, double close,
+StockTimeSeriesData(double open, double high,  double low, double close,
                     double volume) :
-  mSymbol(symbol),
-  mDateTime(timeStamp),
   mOpenValue(open),
   mHighValue(high),
   mLowValue(low),
@@ -21,8 +18,7 @@ StockTimeSeriesData(const std::string& symbol, const std::string& timeStamp,
 //=============================================================================
 void StockTimeSeriesData::debugPrint() const
 {
-  std::cout << mDateTime << std::endl << mSymbol  << std::endl
-            << mOpenValue << std::endl << mHighValue << std::endl
+  std::cout << mOpenValue << std::endl << mHighValue << std::endl
             << mLowValue << std::endl << mCloseValue
             << std::endl << mVolume << std::endl;
 }
