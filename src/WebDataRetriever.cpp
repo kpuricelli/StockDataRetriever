@@ -342,16 +342,17 @@ void WebDataRetriever::writeResponse2File(const std::string& filename)
   // Moved the json files into time-specific directories
   const std::string path = "../json/" + mInterval + "/";
   
-  std::ofstream inputFile(path + filename);
-  if (inputFile.is_open())
+  std::ofstream outFile(path + filename);
+  if (outFile.is_open())
   {
-    inputFile << mResponse;
-    inputFile.close();
+    outFile << mResponse;
+    outFile.close();
   }
 
   // kptodo do something about this error
   else
-    std::cout << "Unable to open input file!" << std::endl;
+    std::cout << "Unable to open file to write: " << path + filename
+              << std::endl;
 }
 
 //=============================================================================
