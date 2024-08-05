@@ -20,15 +20,18 @@ int main(/*int argc, char* argv[]*/)
   w.setSymbol("AAPL");
   w.setInterval("1day");
 
-  // Calendar stuff
-  w.setStartYear(2006);
-  w.setEndYear(2007);
+  // Year
+  w.setStartYear(2010);
+  w.setEndYear(2010);
+
+  // Month
   w.setStartMonth(1);
   w.setEndMonth(12);
+
+  // Day (no set end day => dedeuce how many days are in this month and do all)
   w.setStartDay(1);
 
-  // No set end day => do every day for the month
-  // w.setEndDay(29);
+  // Send all the requests for the given date ranges
   w.sendRangeOfRequests();
 
   return 0;
