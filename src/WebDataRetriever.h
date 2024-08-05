@@ -4,7 +4,6 @@
 //
 //
 
-#include "SymbolContainer.h"
 #include "Calendar.h"
 #include <string>
 #include <vector>
@@ -48,10 +47,6 @@ private:
 
   // Send a single http request
   void sendRequest(const std::string& url);
-
-  // kptodo
-  // Read local json files
-  void parseJsonFile(SymbolContainer& container);
 
   // Write the returned data to a local file
   void writeResponse2File(const std::string& filename);

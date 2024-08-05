@@ -1,6 +1,4 @@
 #include "WebDataRetriever.h"
-#include "StockTimeSeriesData.h"
-#include "Json.hpp"
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include <map>
 #include <iostream>
@@ -12,9 +10,6 @@
 //=============================================================================
 namespace
 {
-  // Scope the resolution of the parser
-  using json = nlohmann::json; 
-
   // Curl callback when data is received
   std::size_t handleResponse(const char* in, std::size_t size,
                              std::size_t num, std::string* out)
@@ -48,7 +43,7 @@ WebDataRetriever::~WebDataRetriever()
     delete mResponsePtr;
   mResponsePtr = nullptr;
 
-  // Unsure what curl is doing internally with this ptr
+  // Confirmed w/ valgrind mCurlHandle is being free-d
   curl_easy_cleanup(mCurlHandle);
   mCurlHandle = nullptr;
 }
@@ -333,65 +328,6 @@ void WebDataRetriever::sendRequest(const std::string& url)
   
   // HTTP response code
   curl_easy_getinfo(mCurlHandle, CURLINFO_RESPONSE_CODE, &mHttpCode);
-}
-
-//=============================================================================
-//=============================================================================
-void WebDataRetriever::parseJsonFile(SymbolContainer& /*container*/)
-{
-  // kptodo
-  // should this be moved into a different class?
-  // Open the file
-#if 0
-  // kptodo
-  // should this be in a try block?
-  const json responseAsJson = json::parse(mResponse);
-  
-  // Something bad happened if status != ok
-  const std::string status = responseAsJson["status"];
-  if (status != "ok")
-  {
-    const std::string reason = responseAsJson["message"];
-    std::cout << "\nError: API status returned: " << status
-              << "\nWith message: " << reason << std::endl;
-    return;
-  }
-
-  const json meta = responseAsJson["meta"];
-  const std::string symbol = meta["symbol"];
-  
-  const json values = responseAsJson["values"];
-  std::map<std::string, StockTimeSeriesData> valuesContainer;
-  for (const auto& value : values)
-  {
-    const std::string timestamp = value["datetime"];
-    const std::string openStr = value["open"];
-    const std::string highStr = value["high"];
-    const std::string lowStr = value["low"];
-    const std::string closeStr = value["close"];
-    const std::string volumeStr = value["volume"];
-
-    // kptodo check precision / set (?)
-    // Typecast to numbers
-    const double open = std::atof(openStr.c_str());
-    const double high = std::atof(highStr.c_str());
-    const double low = std::atof(lowStr.c_str());
-    const double close = std::atof(closeStr.c_str());
-    const double volume = std::atof(volumeStr.c_str());
-
-    // Create the time series object
-    StockTimeSeriesData record(symbol, timestamp, open, high, low, close,
-                               volume);
-
-    // Save local
-    valuesContainer.emplace(timestamp, record);
-  }
-  
-  // Save to container
-  container.insertSymbol(symbol, valuesContainer);
-
-  // kptodo
-#endif
 }
 
 //=============================================================================
