@@ -23,7 +23,7 @@ Calendar::Calendar(unsigned short startYear, unsigned short endYear,
 //=============================================================================
 Calendar::~Calendar()
 {
-  // kptodo delete the partial_dates in mHolidays (?)
+  mHolidays.clear();
 }
 
 //=============================================================================
@@ -38,8 +38,10 @@ void Calendar::generateUrls(std::vector<std::pair<std::string, date>>& urlList,
   for (unsigned short year = mStartYear; year <= mEndYear; ++year)
   {
     // Update the holidays with the current year's dates
-    resetHolidays();
-    addAllMarketHolidays(year);    
+    if (mHolidays.size() > 0)
+      resetHolidays();
+    
+    addAllMarketHolidays(year);
     
     // For each month
     for (unsigned short month = mStartMonth; month <= mEndMonth; ++month)
@@ -97,6 +99,9 @@ void Calendar::generateUrls(std::vector<std::pair<std::string, date>>& urlList,
 //=============================================================================
 void Calendar::resetHolidays()
 {
+  // Since mHolidays is full of std::unique_ptr-s, just using .clear() on
+  // the container itself will delete the new-d ptr-s since they're losing
+  // the only reference count they have in mHolidays
   mHolidays.clear();
   mMarketHolidaysForYear.clear();
 }
@@ -159,11 +164,11 @@ void Calendar::addAllMarketHolidays(unsigned short year)
   {
     date tmpDate = from_string(std::to_string(year) + "-01-01");
     if (tmpDate.day_of_week() == Sunday)
-      mHolidays.push_back(new partial_date(2, Jan));
+      mHolidays.push_back(std::make_unique<partial_date>(2, Jan));
     else
-      mHolidays.push_back(new partial_date(1, Jan));
+      mHolidays.push_back(std::make_unique<partial_date>(1, Jan));
   }
-  
+
   // Juneteenth: officially became a federal holiday in 2022
   // If it falls on a Saturday, observed the day prior. If it's on a Sunday,
   // the next weekday
@@ -171,11 +176,11 @@ void Calendar::addAllMarketHolidays(unsigned short year)
   {
     date tmpDate = from_string(std::to_string(year) + "-06-19");
     if (tmpDate.day_of_week() == Saturday)
-      mHolidays.push_back(new partial_date(18, Jun));
+      mHolidays.push_back(std::make_unique<partial_date>(18, Jun));
     else if (tmpDate.day_of_week() == Sunday)
-      mHolidays.push_back(new partial_date(20, Jun));
+      mHolidays.push_back(std::make_unique<partial_date>(20, Jun));
     else
-      mHolidays.push_back(new partial_date(19, Jun));      
+      mHolidays.push_back(std::make_unique<partial_date>(19, Jun));      
   }
 
   // US Independence Day
@@ -184,11 +189,11 @@ void Calendar::addAllMarketHolidays(unsigned short year)
   {
     date tmpDate = from_string(std::to_string(year) + "-07-04");
     if (tmpDate.day_of_week() == Saturday)
-      mHolidays.push_back(new partial_date(3, Jul));
+      mHolidays.push_back(std::make_unique<partial_date>(3, Jul));
     else if (tmpDate.day_of_week() == Sunday)
-      mHolidays.push_back(new partial_date(5, Jul));
+      mHolidays.push_back(std::make_unique<partial_date>(5, Jul));
     else
-      mHolidays.push_back(new partial_date(4, Jul));      
+      mHolidays.push_back(std::make_unique<partial_date>(4, Jul));      
    }
 
   // Christmas Day
@@ -197,11 +202,11 @@ void Calendar::addAllMarketHolidays(unsigned short year)
   {
     date tmpDate = from_string(std::to_string(year) + "-12-25");
     if (tmpDate.day_of_week() == Saturday)
-      mHolidays.push_back(new partial_date(24, Dec));
+      mHolidays.push_back(std::make_unique<partial_date>(24, Dec));
     else if (tmpDate.day_of_week() == Sunday)
-      mHolidays.push_back(new partial_date(26, Dec));
+      mHolidays.push_back(std::make_unique<partial_date>(26, Dec));
     else
-      mHolidays.push_back(new partial_date(25, Dec));
+      mHolidays.push_back(std::make_unique<partial_date>(25, Dec));
    }
 
   //
@@ -212,19 +217,20 @@ void Calendar::addAllMarketHolidays(unsigned short year)
   typedef nth_day_of_the_week_in_month nth_dow;
     
   // MLK Day
-  mHolidays.push_back(new nth_dow(nth_dow::third, Monday, Jan));
+  mHolidays.push_back(std::make_unique<nth_dow>(nth_dow::third, Monday, Jan));
   
   // President's Day
-  mHolidays.push_back(new nth_dow(nth_dow::third, Monday, Feb));
+  mHolidays.push_back(std::make_unique<nth_dow>(nth_dow::third, Monday, Feb));
 
   // Memorial Day: using 'fifth' defaults to 'last monday in month' :)
-  mHolidays.push_back(new nth_dow(nth_dow::fifth, Monday, May));
+  mHolidays.push_back(std::make_unique<nth_dow>(nth_dow::fifth, Monday, May));
 
   // US Labor Day
-  mHolidays.push_back(new nth_dow(nth_dow::first, Monday, Sep));
+  mHolidays.push_back(std::make_unique<nth_dow>(nth_dow::first, Monday, Sep));
   
   // Thanksgiving
-  mHolidays.push_back(new nth_dow(nth_dow::fourth, Thursday, Nov));
+  mHolidays.push_back(std::make_unique<nth_dow>(
+                        nth_dow::fourth, Thursday, Nov));
 
   // Insert into mMarketHolidaysForYear
   generateAllHolidaysForYear(year);
@@ -245,8 +251,8 @@ void Calendar::generateAllHolidaysForYear(unsigned short year)
   // two days in the past from Easter is Good Friday
   const date& goodFriday = calculateGoodFriday(year);
   mMarketHolidaysForYear.insert(goodFriday);
-      
-  for (std::vector<year_based_generator*>::iterator it = mHolidays.begin();
-       it != mHolidays.end(); ++it)
-    mMarketHolidaysForYear.insert((*it)->get_date(year));
+
+  // Using an rvalue reference whenever possible
+  for (auto&& holiday : mHolidays)
+    mMarketHolidaysForYear.insert(holiday->get_date(year));
 }

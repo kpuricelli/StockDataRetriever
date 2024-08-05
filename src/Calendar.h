@@ -83,7 +83,8 @@ private:
   void generateAllHolidaysForYear(unsigned short year);
   
   // Container for market holidays regardless of year
-  std::vector<boost::gregorian::year_based_generator*> mHolidays;
+  std::vector<std::unique_ptr<
+                boost::gregorian::year_based_generator>> mHolidays;
 
   // Container for market holidays based on the current calendar year
   std::set<boost::gregorian::date> mMarketHolidaysForYear;
