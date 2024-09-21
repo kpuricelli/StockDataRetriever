@@ -3,11 +3,6 @@
 # note 'main.o' is specifically excluded 
 #==============================================================================
 
-#
-# kptodo
-# only compile tests if the src object files exist
-#
-
 include ../Makefile.common.defs.mk
 
 # Executable name
